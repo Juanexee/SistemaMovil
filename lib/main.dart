@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-
-import 'screens/login/login_screen.dart';
+import 'package:sistemamovil/screens/inventory/invenroty_screen.dart';
 
 void main() {
   runApp(const MyApp());
 }
-
+ 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
+ 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -19,8 +18,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF38231c)),
         useMaterial3: true,
       ),
-
-      home: const LoginScreen(),
+ 
+      home: const InventoryScreen(),
     );
   }
 }
+ 
