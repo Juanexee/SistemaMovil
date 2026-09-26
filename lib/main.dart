@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'screens/login/login_screen.dart';
+// Importamos la pantalla de Historial de Ventas
+import 'screens/reports/sales_history_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,12 +16,11 @@ class MyApp extends StatelessWidget {
       title: 'El Rancho La Mimi',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // Usamos el color café principal como base para el tema
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF38231c)),
         useMaterial3: true,
       ),
-
-      home: const LoginScreen(),
+      // Definimos la pantalla de Historial de Ventas como la vista inicial
+      home: const SalesHistoryScreen(),
     );
   }
 }
