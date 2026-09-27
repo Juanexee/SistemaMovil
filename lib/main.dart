@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'screens/setting/setting_screen.dart';
 // Importamos la pantalla de Historial de Ventas
 import 'screens/reports/sales_history_screen.dart';
 
@@ -20,8 +19,6 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF38231c)),
         useMaterial3: true,
       ),
-
-      home: const SettingsScreen(),
       // Definimos la pantalla de Historial de Ventas como la vista inicial
       home: const SalesHistoryScreen(),
     );
