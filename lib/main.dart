@@ -7,10 +7,10 @@ import 'screens/reports/sales_history_screen.dart';
 void main() {
   runApp(const MyApp());
 }
- 
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
- 
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -23,8 +23,7 @@ class MyApp extends StatelessWidget {
 
       home: const SettingsScreen(),
       // Definimos la pantalla de Historial de Ventas como la vista inicial
-      home: const SalesHistoryScreen(),
+      // home: const SalesHistoryScreen(),
     );
   }
 }
- 
