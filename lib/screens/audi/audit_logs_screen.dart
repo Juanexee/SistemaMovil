@@ -22,15 +22,14 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-          ClipRRect(
-  borderRadius: BorderRadius.circular(14),
-  child: Image.asset(
-    'assets/images/mimi2.jpg',
-    width: 55,
-    height: 55,
-    fit: BoxFit.cover,
-  ),
-),
+            _buildNavItem(Icons.home_outlined, 'Inicio', false),
+            _buildNavItem(Icons.inventory_2_outlined, 'Inventario', false),
+            _buildNavItem(
+              Icons.show_chart,
+              'Reportes',
+              true,
+            ), // Lo marco como activo
+            _buildNavItem(Icons.settings_outlined, 'Ajustes', false),
           ],
         ),
       ),
@@ -42,26 +41,30 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // TOP BAR
+                // TOP BAR (Modificado para incluir el logo)
                 Row(
                   children: [
+                    // --- AQUÍ ESTÁ EL CAMBIO ---
+                    // Contenedor que antes tenía 'EL', ahora tiene la imagen
                     Container(
                       width: 35,
                       height: 35,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2E221E),
+                        color: const Color(
+                          0xFF2E221E,
+                        ), // Mantenemos el fondo oscuro
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Center(
-                        child: Text(
-                          'EL',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      // Usamos ClipRRect para redondear las esquinas de la imagen si fuera necesario
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/images/mimi2.png', // <--- Ruta a tu imagen
+                          fit: BoxFit.cover, // Para que llene el cuadrado
                         ),
                       ),
                     ),
+                    // -----------------------------
                     const SizedBox(width: 10),
                     const Text(
                       'El Rancho\nLa Mimi',
@@ -233,12 +236,10 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                     ),
                     const SizedBox(width: 15),
                     // Tarjeta clara
-                    // Tarjeta clara
                     Expanded(
                       flex: 4,
                       child: Container(
                         padding: const EdgeInsets.all(20),
-                        // Eliminamos el height: 145 para que la tarjeta se expanda según el texto
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
@@ -246,8 +247,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment
-                              .center, // Centramos por si queda espacio
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               'Alertas críticas',
@@ -275,7 +275,6 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Expanded(
-                                  // Envolvemos este texto en Expanded por precaución para evitar overflow horizontal
                                   child: Text(
                                     'Requiere revisión',
                                     style: TextStyle(
