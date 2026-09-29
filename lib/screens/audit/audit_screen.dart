@@ -15,24 +15,6 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA), // Fondo gris claro
-      // BARRA INFERIOR (Reutilizada de las pantallas anteriores)
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        color: const Color(0xFF2E221E), // Cafe oscuro
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(Icons.home_outlined, 'Inicio', false),
-            _buildNavItem(Icons.inventory_2_outlined, 'Inventario', false),
-            _buildNavItem(
-              Icons.show_chart,
-              'Reportes',
-              true,
-            ), // Lo marco como activo
-            _buildNavItem(Icons.settings_outlined, 'Ajustes', false),
-          ],
-        ),
-      ),
 
       body: SafeArea(
         child: SingleChildScrollView(

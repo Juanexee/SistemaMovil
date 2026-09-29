@@ -17,24 +17,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
       backgroundColor: const Color(
         0xFFF8F9FA,
       ), // Un gris super clarito para el fondo
-      // BARRA INFERIOR CUSTOMIZADA (El BottomNavigationBar normal daba muchos problemas de color)
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        color: const Color(0xFF2E221E), // Cafe oscuro
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(Icons.home_outlined, 'Inicio', false),
-            _buildNavItem(
-              Icons.inventory_2_outlined,
-              'Inventario',
-              true,
-            ), // Este esta activo
-            _buildNavItem(Icons.show_chart, 'Reportes', false),
-            _buildNavItem(Icons.settings_outlined, 'Ajustes', false),
-          ],
-        ),
-      ),
  
       // CUERPO DE LA PANTALLA
       // Uso SingleChildScrollView para que haga scroll en Y y no de error de pixeles

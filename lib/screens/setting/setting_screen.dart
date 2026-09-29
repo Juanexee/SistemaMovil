@@ -18,24 +18,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
  
-      // BARRA INFERIOR CUSTOMIZADA
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        color: const Color(0xFF2E221E), // Cafe oscuro
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(Icons.home_outlined, 'Inicio', false),
-            _buildNavItem(Icons.inventory_2_outlined, 'Inventario', false),
-            _buildNavItem(Icons.show_chart, 'Reportes', false),
-            _buildNavItem(
-              Icons.settings_outlined,
-              'Ajustes',
-              true,
-            ), // Este esta activo ahora
-          ],
-        ),
-      ),
  
       body: SafeArea(
         child: SingleChildScrollView(
@@ -509,21 +491,5 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
  
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: isActive ? Colors.white : Colors.grey[500], size: 24),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive ? Colors.white : Colors.grey[500],
-            fontSize: 10,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
+
 }
