@@ -20,6 +20,7 @@ class ElRanchoLaMimiApp extends StatelessWidget {
     );
   }
 }
+
 class TableManagementScreen extends StatefulWidget {
   const TableManagementScreen({Key? key}) : super(key: key);
 
@@ -119,8 +120,8 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
-}
 
+  // 1. Top Bar superior (Ajustado con la imagen mimi2.png)
   Widget _buildTopBar() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -335,7 +336,8 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
       ],
     );
   }
-  
+
+  // 4. Filtros rápidos deslizables (Chips horizontales)
   Widget _buildFilterChips() {
     return SizedBox(
       height: 38,
@@ -397,7 +399,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
     );
   }
 
-
+  // 5. Título de sección de listado
   Widget _buildSectionTitle() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -421,7 +423,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
     );
   }
 
-
+  // 6. Cuadrícula de tarjetas de mesas (Grid de 2 columnas)
   Widget _buildTableGrid() {
     return GridView.builder(
       itemCount: _filteredTables.length,
@@ -594,6 +596,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
     );
   }
 
+  // 7. Barra de navegación inferior
   Widget _buildBottomNavigationBar() {
     return Container(
       height: 68,
@@ -643,3 +646,4 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
       ),
     );
   }
+}
