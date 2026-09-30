@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'screens/setting/setting_screen.dart';
-// Importamos la pantalla de Historial de Ventas
-import 'screens/reports/sales_history_screen.dart';
+// Importamos la pantalla principal que contiene la barra de navegación
+import 'screens/main/main_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -21,9 +20,8 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      home: const SettingsScreen(),
-      // Definimos la pantalla de Historial de Ventas como la vista inicial
-      // home: const SalesHistoryScreen(),
+      // Definimos la pantalla principal como la vista inicial
+      home: const MainScreen(),
     );
   }
 }

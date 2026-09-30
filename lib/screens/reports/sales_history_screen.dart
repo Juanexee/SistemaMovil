@@ -17,24 +17,6 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       backgroundColor: const Color(
         0xFFF8F9FA,
       ), // Un gris super clarito para el fondo
-      // BARRA INFERIOR CUSTOMIZADA (El BottomNavigationBar normal daba muchos problemas de color)
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        color: const Color(0xFF2E221E), // Cafe oscuro
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(Icons.home_outlined, 'Inicio', false),
-            _buildNavItem(Icons.inventory_2_outlined, 'Inventario', false),
-            _buildNavItem(
-              Icons.show_chart,
-              'Reportes',
-              true,
-            ), // Este esta activo
-            _buildNavItem(Icons.settings_outlined, 'Ajustes', false),
-          ],
-        ),
-      ),
 
       // CUERPO DE LA PANTALLA
       // Uso SingleChildScrollView para que haga scroll en Y y no de error de pixeles
@@ -466,22 +448,5 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     );
   }
 
-  // Botones de navegacion de abajo
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: isActive ? Colors.white : Colors.grey[500], size: 24),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive ? Colors.white : Colors.grey[500],
-            fontSize: 10,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
+
 }
