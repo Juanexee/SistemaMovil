@@ -31,7 +31,7 @@ class OrderCartScreen extends StatefulWidget {
 class _OrderCartScreenState extends State<OrderCartScreen> {
   int _currentBottomIndex = 2; // 2 corresponde a Órdenes / Comanda (activo)
 
-  // Lista mutable de elementos en el carrito para permitir control dinámico de cantidades
+
   final List<Map<String, dynamic>> _cartItems = [
     {
       'title': 'Carne Asada Especial',
@@ -90,7 +90,8 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
     );
   }
 
-  // 1. Top Bar superior
+  
+  // 1. Top Bar superior (Ajustado con la imagen mimi2.png)
   Widget _buildTopBar() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -101,17 +102,13 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFF2E221E),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
-                child: Text(
-                  'EL',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  'assets/images/mimi2.png',
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
@@ -180,7 +177,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
     );
   }
 
-  // 3. Cabecera de Comanda y Mesa
+  
   Widget _buildTableHeaderSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,7 +248,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
     );
   }
 
-  // 4. Lista de Artículos de la Comanda (Cart Items List)
+  
   Widget _buildCartItemList() {
     return ListView.builder(
       itemCount: _cartItems.length,
@@ -315,7 +312,6 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Controles de cantidad
                   Container(
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8F9FA),
@@ -364,7 +360,6 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                       ],
                     ),
                   ),
-                  // Precio total calculado del platillo
                   Text(
                     'C\$ ${itemTotal.toStringAsFixed(2)}',
                     style: const TextStyle(
@@ -478,9 +473,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
           ),
           elevation: 0,
         ),
-        onPressed: () {
-          // Acción de enviar comanda a cocina
-        },
+        onPressed: () {},
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
@@ -503,15 +496,15 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
   // 7. Barra de navegación inferior
   Widget _buildBottomNavigationBar() {
     return Container(
-      height: 65,
+      height: 68,
       decoration: const BoxDecoration(
-        color: Color(0xFF2E221E),
+        color: Color(0xFF231B18),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildNavItem(Icons.table_restaurant_outlined, 'Salón', 0),
-          _buildNavItem(Icons.grid_view_rounded, 'Menú', 1),
+          _buildNavItem(Icons.home_outlined, 'Inicio', 0),
+          _buildNavItem(Icons.grid_view_rounded, 'Catálogo', 1),
           _buildNavItem(Icons.receipt_long_outlined, 'Órdenes', 2),
           _buildNavItem(Icons.settings_outlined, 'Ajustes', 3),
         ],
@@ -521,6 +514,8 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isActive = _currentBottomIndex == index;
+    final color = isActive ? Colors.white : Colors.white54;
+
     return InkWell(
       onTap: () {
         setState(() {
@@ -532,15 +527,15 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
         children: [
           Icon(
             icon,
-            color: isActive ? Colors.white : Colors.white60,
+            color: color,
             size: 22,
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: isActive ? Colors.white : Colors.white60,
-              fontSize: 10,
+              color: color,
+              fontSize: 11,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             ),
           ),
