@@ -133,7 +133,7 @@ Row(
  
                 const SizedBox(height: 25),
  
-                // TARJETAS DE RESUMEN
+                // TARJETAS DE RESUMEN (AHORA PAREJAS DEL MISMO TAMAÑO)
                 // Uso el expanded para que no de overflow
                 Row(
                   children: [
@@ -142,8 +142,7 @@ Row(
                       flex: 5,
                       child: Container(
                         padding: const EdgeInsets.all(20),
-                        height:
-                            180, // Le di un alto fijo para que se alinee con las otras dos
+                        height: 180, // Le di un alto fijo para que se alinee con las otras dos
                         decoration: BoxDecoration(
                           color: const Color(0xFF38231c),
                           borderRadius: BorderRadius.circular(16),
@@ -193,91 +192,46 @@ Row(
                       ),
                     ),
                     const SizedBox(width: 15),
-                    // Columna con las dos tarjetas claras
+                    // Columna con la tarjeta blanca (AHORA DEL MISMO TAMAÑO)
                     Expanded(
                       flex: 4,
-                      child: Column(
-                        children: [
-                          // Tarjeta de rotacion
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(15),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.grey.shade200),
+                      child: Container(
+                        width: double.infinity,
+                        height: 180, // MISMA ALTURA QUE LA TARJETA OSCURA
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween, // DISTRIBUIDO IGUAL QUE LA OSCURA
+                          children: [
+                            Text(
+                              'Total de ítems',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 13,
+                              ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Tasa de rotación',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                const Text(
-                                  '4.5x',
-                                  style: TextStyle(
-                                    color: Colors.black87,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  'Ritmo saludable',
-                                  style: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
+                            const Text(
+                              '128',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 32, // AGRANDADO PARA QUE SE VEA MEJOR
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          // Tarjeta de total de items
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(15),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.grey.shade200),
+                            Text(
+                              'En 6 categorías',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 11,
+                              ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Total de ítems',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                const Text(
-                                  '128',
-                                  style: TextStyle(
-                                    color: Colors.black87,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  'En 6 categorías',
-                                  style: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
