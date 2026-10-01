@@ -25,13 +25,13 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     // Índice 0: Inicio (Vinculado a AuditLogsScreen)
     const AuditLogsScreen(),
-    
+
     // Índice 1: Inventario (Vinculado a InventoryScreen)
     const InventoryScreen(),
-    
+
     // Índice 2: Reportes (Historial de Ventas)
     const SalesHistoryScreen(),
-    
+
     // Índice 3: Ajustes
     const SettingsScreen(),
   ];
@@ -76,8 +76,8 @@ class _MainScreenState extends State<MainScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              icon, 
-              color: isActive ? Colors.white : Colors.grey[500], 
+              icon,
+              color: isActive ? Colors.white : Colors.grey[500],
               size: 24,
             ),
             const SizedBox(height: 4),

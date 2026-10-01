@@ -64,6 +64,7 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
             ],
           ),
         ),
+      ),
     );
   }
 
@@ -349,52 +350,4 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
     );
   }
 
-  // 7. Barra de navegación inferior
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 65,
-      decoration: const BoxDecoration(
-        color: Color(0xFF2E221E),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, 'Inicio', 0),
-          _buildNavItem(Icons.grid_view_rounded, 'Catálogo', 1),
-          _buildNavItem(Icons.receipt_long_outlined, 'Órdenes', 2),
-          _buildNavItem(Icons.settings_outlined, 'Ajustes', 3),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    final isActive = _currentBottomIndex == index;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _currentBottomIndex = index;
-        });
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: isActive ? Colors.white : Colors.white60,
-            size: 22,
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              color: isActive ? Colors.white : Colors.white60,
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

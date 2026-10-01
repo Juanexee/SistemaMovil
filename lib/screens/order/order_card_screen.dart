@@ -85,6 +85,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
             ],
           ),
         ),
+      ),
     );
   }
 
@@ -96,6 +97,13 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
       children: [
         Row(
           children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            const SizedBox(width: 4),
             Container(
               width: 42,
               height: 42,
@@ -491,54 +499,4 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
     );
   }
 
-  // 7. Barra de navegación inferior
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 68,
-      decoration: const BoxDecoration(
-        color: Color(0xFF231B18),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, 'Inicio', 0),
-          _buildNavItem(Icons.grid_view_rounded, 'Catálogo', 1),
-          _buildNavItem(Icons.receipt_long_outlined, 'Órdenes', 2),
-          _buildNavItem(Icons.settings_outlined, 'Ajustes', 3),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    final isActive = _currentBottomIndex == index;
-    final color = isActive ? Colors.white : Colors.white54;
-
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _currentBottomIndex = index;
-        });
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: color,
-            size: 22,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
