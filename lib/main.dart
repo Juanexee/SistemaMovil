@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'screens/audi/audit_logs_screen.dart';
- //ola
+// Importamos la pantalla de login como vista inicial
+import 'screens/login/login_screen.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -15,11 +16,11 @@ class MyApp extends StatelessWidget {
       title: 'El Rancho La Mimi',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // Usamos el color café principal como base para el tema
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF38231c)),
         useMaterial3: true,
       ),
 
+      // Definimos la pantalla de login como la vista inicial
       home: const LoginScreen(),
     );
   }
