@@ -64,8 +64,6 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 

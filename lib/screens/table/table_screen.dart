@@ -22,7 +22,8 @@ class ElRanchoLaMimiApp extends StatelessWidget {
 }
 
 class TableManagementScreen extends StatefulWidget {
-  const TableManagementScreen({Key? key}) : super(key: key);
+  final VoidCallback? onTableTap; // Agregamos este callback
+  const TableManagementScreen({Key? key, this.onTableTap}) : super(key: key);
 
   @override
   State<TableManagementScreen> createState() => _TableManagementScreenState();
@@ -116,8 +117,6 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -457,7 +456,13 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
           detailIcon = Icons.payments_outlined;
         }
 
-        return Container(
+        return GestureDetector(
+          onTap: () {
+            if (widget.onTableTap != null) {
+              widget.onTableTap!();
+            }
+          },
+          child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16.0),
@@ -593,57 +598,6 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
           ),
         );
       },
-    );
-  }
-
-  // 7. Barra de navegación inferior
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 68,
-      decoration: const BoxDecoration(
-        color: Color(0xFF231B18),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, 'Inicio', 0),
-          _buildNavItem(Icons.grid_view_rounded, 'Catálogo', 1),
-          _buildNavItem(Icons.receipt_long_outlined, 'Órdenes', 2),
-          _buildNavItem(Icons.settings_outlined, 'Ajustes', 3),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    final isActive = _currentBottomIndex == index;
-    final color = isActive ? Colors.white : Colors.white54;
-
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _currentBottomIndex = index;
-        });
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: color,
-            size: 22,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -85,8 +85,6 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 

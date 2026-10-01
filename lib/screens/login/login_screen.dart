@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../main/manager_screen.dart';
+import '../main/waiter_screen.dart';
 
 // Lo converti a StatefulWidget porque necesitamos cambiar el estado del ojito de la contraseña
 class LoginScreen extends StatefulWidget {
@@ -209,7 +211,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
-                        // print('Validado'); // para probar en consola
+                        String roleEntered = user_ctrl.text.trim().toLowerCase();
+
+                        if (roleEntered == 'gerente') {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const ManagerScreen()),
+                          );
+                        } else if (roleEntered == 'mesero') {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const WaiterScreen()),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Rol no reconocido. Escribe "gerente" o "mesero" en el campo de usuario.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
