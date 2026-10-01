@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 // Importamos las pantallas que vamos a usar en la navegación
 // Subimos un nivel '../' porque ahora estamos dentro de la carpeta 'main'
 import '../audit/audit_screen.dart';
-import '../inventory/invenroty_screen.dart'; // (Nota: tiene un error de tipeo en el nombre del archivo)
+import '../inventory/invenroty_screen.dart';
 import '../reports/sales_history_screen.dart';
 import '../setting/setting_screen.dart';
 
@@ -25,13 +25,13 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     // Índice 0: Inicio (Vinculado a AuditLogsScreen)
     const AuditLogsScreen(),
-    
+
     // Índice 1: Inventario (Vinculado a InventoryScreen)
     const InventoryScreen(),
-    
+
     // Índice 2: Reportes (Historial de Ventas)
     const SalesHistoryScreen(),
-    
+
     // Índice 3: Ajustes
     const SettingsScreen(),
   ];
@@ -40,10 +40,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // 3. Usamos un IndexedStack para mantener vivas las pantallas
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
 
       // 4. Barra de navegación principal compartida
       bottomNavigationBar: Container(
@@ -79,8 +76,8 @@ class _MainScreenState extends State<MainScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              icon, 
-              color: isActive ? Colors.white : Colors.grey[500], 
+              icon,
+              color: isActive ? Colors.white : Colors.grey[500],
               size: 24,
             ),
             const SizedBox(height: 4),

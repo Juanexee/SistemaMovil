@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-// Importamos la pantalla principal que contiene la barra de navegación
-import 'screens/main/main_screen.dart';
+// Importamos la pantalla de login como vista inicial
+import 'screens/login/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,8 +20,8 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      // Definimos la pantalla principal como la vista inicial
-      home: const MainScreen(),
+      // Definimos la pantalla de login como la vista inicial
+      home: const LoginScreen(),
     );
   }
 }

@@ -22,7 +22,8 @@ class ElRanchoLaMimiApp extends StatelessWidget {
 }
 
 class TableManagementScreen extends StatefulWidget {
-  const TableManagementScreen({Key? key}) : super(key: key);
+  final VoidCallback? onTableTap; // Agregamos este callback
+  const TableManagementScreen({Key? key, this.onTableTap}) : super(key: key);
 
   @override
   State<TableManagementScreen> createState() => _TableManagementScreenState();
@@ -89,7 +90,9 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
   List<Map<String, dynamic>> get _filteredTables {
     if (_selectedFilterIndex == 0) return _tables;
     String selectedFilterText = _filters[_selectedFilterIndex];
-    return _tables.where((table) => table['type'] == selectedFilterText).toList();
+    return _tables
+        .where((table) => table['type'] == selectedFilterText)
+        .toList();
   }
 
   @override
@@ -117,7 +120,6 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -215,10 +217,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
         SizedBox(height: 4),
         Text(
           'Selecciona una mesa para tomar o revisar comanda',
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontSize: 13, color: Colors.grey),
         ),
       ],
     );
@@ -244,12 +243,13 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                   children: const [
                     Text(
                       'Mesas en operación',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white70,
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.white70),
                     ),
-                    Icon(Icons.people_outline_rounded, color: Colors.white70, size: 20),
+                    Icon(
+                      Icons.people_outline_rounded,
+                      color: Colors.white70,
+                      size: 20,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -268,10 +268,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                     SizedBox(width: 4),
                     Text(
                       '/ 12',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white60,
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.white60),
                     ),
                   ],
                 ),
@@ -297,12 +294,13 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                   children: const [
                     Text(
                       'Disponibles',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
-                    Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 20),
+                    Icon(
+                      Icons.check_circle_outline_rounded,
+                      color: Colors.green,
+                      size: 20,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -361,7 +359,9 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                   color: isSelected ? const Color(0xFF2E221E) : Colors.white,
                   borderRadius: BorderRadius.circular(16.0),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF2E221E) : Colors.grey.shade300,
+                    color: isSelected
+                        ? const Color(0xFF2E221E)
+                        : Colors.grey.shade300,
                   ),
                 ),
                 child: Row(
@@ -375,8 +375,8 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                           color: index == 1
                               ? Colors.green
                               : index == 2
-                                  ? Colors.orange
-                                  : Colors.blue,
+                              ? Colors.orange
+                              : Colors.blue,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -384,7 +384,9 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                     Text(
                       _filters[index],
                       style: TextStyle(
-                        color: isSelected ? Colors.white : const Color(0xFF2E221E),
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF2E221E),
                         fontWeight: FontWeight.w500,
                         fontSize: 13,
                       ),
@@ -414,10 +416,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
         ),
         Text(
           '${_filteredTables.length} mesas',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
         ),
       ],
     );
@@ -457,193 +456,148 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
           detailIcon = Icons.payments_outlined;
         }
 
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16.0),
-            border: Border.all(color: Colors.grey.shade200),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16.0),
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                    color: statusColor,
-                    width: 4.0,
+        return GestureDetector(
+          onTap: () {
+            if (widget.onTableTap != null) {
+              widget.onTableTap!();
+            }
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    left: BorderSide(color: statusColor, width: 4.0),
                   ),
                 ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            table['name'],
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2E221E),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: badgeBgColor,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            status,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: statusColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(detailIcon, size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            table['detail'],
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 16, color: Colors.black12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 22,
-                              height: 22,
-                              decoration: const BoxDecoration(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              table['name'],
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
                                 color: Color(0xFF2E221E),
-                                shape: BoxShape.circle,
                               ),
-                              child: Center(
-                                child: Text(
-                                  table['waiterInitials'],
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: badgeBgColor,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              status,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(detailIcon, size: 14, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              table['detail'],
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 16, color: Colors.black12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF2E221E),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    table['waiterInitials'],
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            SizedBox(
-                              width: 65,
-                              child: Text(
-                                table['waiterName'],
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF2E221E),
+                              const SizedBox(width: 6),
+                              SizedBox(
+                                width: 65,
+                                child: Text(
+                                  table['waiterName'],
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF2E221E),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
-                        ),
-                        const Icon(
-                          Icons.more_vert_rounded,
-                          color: Colors.grey,
-                          size: 18,
-                        ),
-                      ],
-                    ),
-                  ],
+                            ],
+                          ),
+                          const Icon(
+                            Icons.more_vert_rounded,
+                            color: Colors.grey,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         );
       },
-    );
-  }
-
-  // 7. Barra de navegación inferior
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 68,
-      decoration: const BoxDecoration(
-        color: Color(0xFF231B18),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, 'Inicio', 0),
-          _buildNavItem(Icons.grid_view_rounded, 'Catálogo', 1),
-          _buildNavItem(Icons.receipt_long_outlined, 'Órdenes', 2),
-          _buildNavItem(Icons.settings_outlined, 'Ajustes', 3),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    final isActive = _currentBottomIndex == index;
-    final color = isActive ? Colors.white : Colors.white54;
-
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _currentBottomIndex = index;
-        });
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: color,
-            size: 22,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
