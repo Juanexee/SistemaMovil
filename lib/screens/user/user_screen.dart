@@ -426,4 +426,74 @@ class UserManagementScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 10),
-                    
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Etiqueta del Rol
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: tagColor,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              role,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: tagTextColor,
+                              ),
+                            ),
+                          ),
+                          // Acciones (Editar y Switch)
+                          Row(
+                            children: [
+                              const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
+                              const SizedBox(width: 8),
+                              Transform.scale(
+                                scale: 0.7,
+                                child: Switch(
+                                  value: true,
+                                  onChanged: (val) {},
+                                  thumbColor: WidgetStateProperty.all(Colors.white),
+                                  trackColor: WidgetStateProperty.all(const Color(0xFF322018)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper para los elementos del Bottom Navigation Bar
+  Widget _buildNavItem(IconData icon, String label, bool isSelected) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          color: isSelected ? Colors.white : Colors.white54,
+          size: 20,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.white54,
+            fontSize: 10,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ],
+    );
+  }
+}
