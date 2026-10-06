@@ -324,4 +324,106 @@ class UserManagementScreen extends StatelessWidget {
       ),
     );
   }
+  // Helper para construir los Chips de Filtro
+  Widget _buildFilterChip(String label, {bool isSelected = false, IconData? icon, bool hasDropdown = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFF322018) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? const Color(0xFF322018) : Colors.grey.shade300,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: isSelected ? Colors.white : Colors.black54),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isSelected ? Colors.white : Colors.black87,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          if (hasDropdown) ...[
+            const SizedBox(width: 4),
+            const Icon(Icons.keyboard_arrow_down, size: 14, color: Colors.black54),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // Helper para construir la tarjeta de usuario
+  Widget _buildUserCard({
+    required String initials,
+    required String name,
+    required String email,
+    required String role,
+    required Color tagColor,
+    required Color tagTextColor,
+    required Color sideAccentColor,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Borde/Acento lateral de color
+              Container(
+                width: 4,
+                color: sideAccentColor,
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: sideAccentColor.withValues(alpha: 0.3),
+                            child: Text(
+                              initials,
+                              style: TextStyle(
+                                color: sideAccentColor.withValues(alpha: 1.0),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2C1E18),
+                                ),
+                              ),
+                              Text(
+                                email,
+                                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
                     
