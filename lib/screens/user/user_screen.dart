@@ -212,3 +212,116 @@ class UserManagementScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    // --- Filtros / Chips ---
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildFilterChip('Todos', isSelected: true),
+                        _buildFilterChip('Gerente', icon: Icons.person_outline, hasDropdown: true),
+                        _buildFilterChip('Administrador', icon: Icons.verified_outlined, hasDropdown: true),
+                        _buildFilterChip('Mesero / Salón', icon: Icons.person_outline, hasDropdown: true),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // --- Sección Equipo de Trabajo ---
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'PERSONAL REGISTRADO',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const Text(
+                              'Equipo de trabajo',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2C1E18),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '4 cuentas',
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // --- Lista de Usuarios ---
+                    _buildUserCard(
+                      initials: 'CR',
+                      name: 'Carlos Rivera',
+                      email: 'carlos.rivera@mimi.pos',
+                      role: 'Gerente',
+                      tagColor: const Color(0xFFF7EBE1),
+                      tagTextColor: const Color(0xFFB57049),
+                      sideAccentColor: const Color(0xFFDCA887),
+                    ),
+                    _buildUserCard(
+                      initials: 'MG',
+                      name: 'María González',
+                      email: 'maria.gonzalez@mimi.pos',
+                      role: 'Administrador',
+                      tagColor: const Color(0xFFEFEFEF),
+                      tagTextColor: const Color(0xFF666666),
+                      sideAccentColor: const Color(0xFFCCCCCC),
+                    ),
+                    _buildUserCard(
+                      initials: 'AT',
+                      name: 'Ana Torres',
+                      email: 'ana.torres@mimi.pos',
+                      role: 'Mesero / Salón',
+                      tagColor: const Color(0xFFEBF5EE),
+                      tagTextColor: const Color(0xFF427A59),
+                      sideAccentColor: const Color(0xFFA2C7B3),
+                    ),
+                    _buildUserCard(
+                      initials: 'LM',
+                      name: 'Luis Mendoza',
+                      email: 'luis.mendoza@mimi.pos',
+                      role: 'Mesero / Salón',
+                      tagColor: const Color(0xFFEBF5EE),
+                      tagTextColor: const Color(0xFF427A59),
+                      sideAccentColor: const Color(0xFFA2C7B3),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // --- Barra de Navegación Inferior (Custom) ---
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF322018), // Fondo oscuro
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(Icons.home_outlined, 'Inicio', false),
+                  _buildNavItem(Icons.widgets_outlined, 'Inventario', false),
+                  _buildNavItem(Icons.show_chart, 'Reportes', false),
+                  _buildNavItem(Icons.people_outline, 'Usuarios', true),
+                  _buildNavItem(Icons.settings_outlined, 'Ajustes', false),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+                    
