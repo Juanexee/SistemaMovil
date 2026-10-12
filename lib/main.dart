@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // Importamos la pantalla de login como vista inicial
-import 'screens/login/login_screen.dart';
+import 'presentation/screens/login/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
