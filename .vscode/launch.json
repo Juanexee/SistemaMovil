@@ -10,7 +10,7 @@
             "type": "dart"
         },
         {
-            "name": "sistemamovil (profile mode)",
+            "name": "sistemamovil (Flutter Pixel 7)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
