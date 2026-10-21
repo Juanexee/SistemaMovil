@@ -4,6 +4,7 @@ import '../inventory/invenroty_screen.dart';
 import '../reports/sales_history_screen.dart';
 import '../setting/setting_screen.dart';
 import '../login/login_screen.dart';
+import '../audit/audit_screen.dart'; 
 
 class ManagerScreen extends StatefulWidget {
   const ManagerScreen({Key? key}) : super(key: key);
@@ -14,15 +15,16 @@ class ManagerScreen extends StatefulWidget {
 
 class _ManagerScreenState extends State<ManagerScreen> {
   // Esta variable guarda el número de la pestaña en la que estamos.
-  // Empezamos en 0, que es la primera pestaña (Inventario).
+  // Empezamos en 0, que es la primera pestaña (auditoria).
   int _currentIndex = 0;
 
   // Lista de las "sub-pantallas" que verá el gerente.
   // El IndexedStack se encargará de mostrar una de estas dependiendo del _currentIndex.
   final List<Widget> _screens = [
-    const InventoryScreen(),
-    const SalesHistoryScreen(),
-    const SettingsScreen(),
+    const AuditLogsScreen(), // 0
+    const InventoryScreen(), // 1
+    const SalesHistoryScreen(), // 2
+    const SettingsScreen(), // 3
   ];
 
   @override
@@ -42,9 +44,14 @@ class _ManagerScreenState extends State<ManagerScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Icons.inventory_2, 'Inventario', 0),
-            _buildNavItem(Icons.bar_chart, 'Reportes', 1),
-            _buildNavItem(Icons.settings, 'Ajustes', 2),
+            // Botón 0: Inicio → muestra la pantalla de Auditoría
+           // Usamos el ícono de una casita (home)
+           _buildNavItem(Icons.home, 'Inicio', 0),
+
+
+            _buildNavItem(Icons.inventory_2, 'Inventario', 1),
+            _buildNavItem(Icons.bar_chart, 'Reportes', 2),
+            _buildNavItem(Icons.settings, 'Ajustes', 3),
             // Botón de cerrar sesión
             InkWell(
               onTap: () {
