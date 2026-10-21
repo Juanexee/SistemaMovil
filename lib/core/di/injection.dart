@@ -47,6 +47,9 @@ import '../../services/unidades_medida_service.dart';
 import '../../services/ventas_service.dart';
 import '../../services/user_service.dart';
 
+// Providers
+import '../../presentation/providers/user_provider.dart';
+
 // Instancia global del Service Locator
 // Uso: sl<UserService>() desde cualquier parte del codigo
 final sl = GetIt.instance;
@@ -57,9 +60,7 @@ void setupDependencies() {
   // -------------------------------------------------------
 
   // Almacenamiento seguro del JWT â€” RNF-MOV-SEG-02
-  sl.registerLazySingleton<SecureStorageService>(
-    () => SecureStorageService(),
-  );
+  sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
 
   // -------------------------------------------------------
   // NIVEL 2: Cliente HTTP (depende de SecureStorageService)
@@ -109,9 +110,7 @@ void setupDependencies() {
   sl.registerLazySingleton<RecetasRepository>(
     () => RecetasRepository(sl<ApiClient>()),
   );
-  sl.registerLazySingleton<RolRepository>(
-    () => RolRepository(sl<ApiClient>()),
-  );
+  sl.registerLazySingleton<RolRepository>(() => RolRepository(sl<ApiClient>()));
   sl.registerLazySingleton<SesionRepository>(
     () => SesionRepository(sl<ApiClient>()),
   );
@@ -163,9 +162,7 @@ void setupDependencies() {
   sl.registerLazySingleton<RecetasService>(
     () => RecetasService(sl<RecetasRepository>()),
   );
-  sl.registerLazySingleton<RolService>(
-    () => RolService(sl<RolRepository>()),
-  );
+  sl.registerLazySingleton<RolService>(() => RolService(sl<RolRepository>()));
   sl.registerLazySingleton<SesionService>(
     () => SesionService(sl<SesionRepository>()),
   );
@@ -178,4 +175,11 @@ void setupDependencies() {
   sl.registerLazySingleton<UserService>(
     () => UserService(sl<UsersRepository>()),
   );
+
+  // -------------------------------------------------------
+  // NIVEL 5: Providers (dependen de sus Services)
+  // -------------------------------------------------------
+
+  // UserProvider necesita el UserService para gestionar el estado de usuarios
+  sl.registerFactory<UserProvider>(() => UserProvider(sl<UserService>()));
 }
