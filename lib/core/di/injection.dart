@@ -50,6 +50,8 @@ import '../../services/user_service.dart';
 // Providers
 import '../../presentation/providers/user_provider.dart';
 import '../../presentation/providers/auth_provider.dart';
+import '../../presentation/providers/ventas_provider.dart';
+import '../../presentation/providers/pedidos_provider.dart';
 
 // Instancia global del Service Locator
 // Uso: sl<UserService>() desde cualquier parte del codigo
@@ -185,4 +187,10 @@ void setupDependencies() {
   sl.registerFactory<UserProvider>(() => UserProvider(sl<UserService>()));
 
   sl.registerFactory<AuthProvider>(() => AuthProvider(sl<AuthService>()));
+
+  sl.registerFactory<VentasProvider>(() => VentasProvider(sl<VentasService>()));
+
+  sl.registerFactory<PedidosProvider>(
+    () => PedidosProvider(sl<VentasService>()),
+  );
 }
