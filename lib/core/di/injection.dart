@@ -49,6 +49,7 @@ import '../../services/user_service.dart';
 
 // Providers
 import '../../presentation/providers/user_provider.dart';
+import '../../presentation/providers/auth_provider.dart';
 
 // Instancia global del Service Locator
 // Uso: sl<UserService>() desde cualquier parte del codigo
@@ -182,4 +183,6 @@ void setupDependencies() {
 
   // UserProvider necesita el UserService para gestionar el estado de usuarios
   sl.registerFactory<UserProvider>(() => UserProvider(sl<UserService>()));
+
+  sl.registerFactory<AuthProvider>(() => AuthProvider(sl<AuthService>()));
 }
