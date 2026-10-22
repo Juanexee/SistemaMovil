@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../main/manager_screen.dart';
 import '../main/waiter_screen.dart';
+import 'package:provider/provider.dart';
+import '../../../presentation/providers/auth_provider.dart';
 
 // Lo converti a StatefulWidget porque necesitamos cambiar el estado del ojito de la contraseña
 class LoginScreen extends StatefulWidget {
@@ -209,24 +211,46 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 60,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        String roleEntered = user_ctrl.text.trim().toLowerCase();
+                        // 1. Llamamos al AuthProvider para consumir la API
+                        final authProvider = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
 
-                        if (roleEntered == 'gerente') {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const ManagerScreen()),
-                          );
-                        } else if (roleEntered == 'mesero') {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const WaiterScreen()),
-                          );
+                        bool exito = await authProvider.login(
+                          user_ctrl.text.trim(),
+                          passController.text.trim(),
+                        );
+
+                        if (exito) {
+                          // 2. Obtenemos el rol real que devolvió el servidor en Azure
+                          String rol =
+                              authProvider.loginResponse?.role.toLowerCase() ??
+                              '';
+
+                          // 3. Redirigimos según el rol de la base de datos
+                          if (rol == 'gerente' || rol == 'administrador') {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ManagerScreen(),
+                              ),
+                            );
+                          } else {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const WaiterScreen(),
+                              ),
+                            );
+                          }
                         } else {
+                          // Si falla, mostramos el error que viene del Provider/API
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Rol no reconocido. Escribe "gerente" o "mesero" en el campo de usuario.'),
+                            SnackBar(
+                              content: Text(authProvider.errorMessage),
                               backgroundColor: Colors.red,
                             ),
                           );
