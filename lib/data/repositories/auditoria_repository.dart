@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // auditoria_repository.dart
 // Lee los logs del sistema desde MongoDB via la API
 // Cubre RF-MOV-AUD-01 y RF-MOV-AUD-02
@@ -21,8 +21,15 @@ class AuditoriaRepository {
       ApiConstants.auditoriaLogs,
       queryParameters: filtros,
     );
-    if (json is! List) throw Exception('Se esperaba una lista de logs');
-    return json
+    List logsList = [];
+    if (json is List) {
+      logsList = json;
+    } else if (json is Map<String, dynamic> && json['logs'] is List) {
+      logsList = json['logs'];
+    } else {
+      throw Exception('Se esperaba una lista de logs');
+    }
+    return logsList
         .map((e) => LogAuditoriaModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }

@@ -29,11 +29,16 @@ class InventarioProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Llamamos a los métodos de  InventarioService
-      _resumen = await _inventarioService.getResumen();
-      _alertas = await _inventarioService.getAlertas();
-    } catch (e) {
-      _errorMessage = 'Error al cargar datos de inventario: $e';
+      try {
+        _resumen = await _inventarioService.getResumen();
+      } catch (e) {
+        _errorMessage = 'Resumen no disponible: $e';
+      }
+      try {
+        _alertas = await _inventarioService.getAlertas();
+      } catch (e) {
+        _errorMessage = (_errorMessage.isEmpty ? '' : '$_errorMessage | ') + 'Alertas: $e';
+      }
     } finally {
       _isLoading = false;
       notifyListeners(); // La pantalla se refresca automáticamente con la info de la API

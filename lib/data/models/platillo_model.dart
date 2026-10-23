@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // platillo_model.dart
 // =========================================================
 class PlatilloModel {
@@ -24,14 +24,14 @@ class PlatilloModel {
 
   factory PlatilloModel.fromJson(Map<String, dynamic> json) {
     return PlatilloModel(
-      id:              json['id']              ?? 0,
+      id:              json['platilloID']      ?? json['id']              ?? 0,
       nombre:          json['nombre']          ?? '',
       descripcion:     json['descripcion']     ?? '',
       precio:          (json['precio']         ?? 0).toDouble(),
-      categoriaId:     json['categoriaId']     ?? 0,
-      categoriaNombre: json['categoriaNombre'],
+      categoriaId:     json['categoriaID']     ?? json['categoriaId']     ?? 0,
+      categoriaNombre: json['nombreCategoria'] ?? json['categoriaNombre'],
       disponible:      json['disponible']      ?? true,
-      imagenUrl:       json['imagenUrl'],
+      imagenUrl:       json['imagenBase64']    ?? json['imagenUrl'],
     );
   }
 

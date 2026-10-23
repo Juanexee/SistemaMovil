@@ -1,19 +1,27 @@
-﻿// =========================================================
+// =========================================================
 // auth_model.dart
 // Modelos para el login: lo que mando y lo que recibo
 // =========================================================
 
 // Lo que mando al servidor para iniciar sesion
 class LoginRequest {
-  final String email;
+  final String usuario;
   final String password;
 
-  LoginRequest({required this.email, required this.password});
+  LoginRequest({
+    String? usuario,
+    String? email,
+    required this.password,
+  }) : usuario = usuario ?? email ?? '';
 
   // Convierto el objeto a Map para mandarlo como JSON en el POST
   Map<String, dynamic> toJson() => {
-    'email': email,
+    'nombreUsuario': usuario,
+    'NombreUsuario': usuario,
+    'usuario': usuario,
+    'email': usuario,
     'password': password,
+    'Password': password,
   };
 }
 
@@ -33,10 +41,11 @@ class LoginResponse {
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
-      token:     json['token']     ?? '',
-      userName:  json['userName']  ?? '',
-      role:      json['role']      ?? '',
-      expiresAt: json['expiresAt'],
+      token:     json['token'] ?? json['Token'] ?? '',
+      userName:  json['userName'] ?? json['UserName'] ?? json['nombreUsuario'] ?? json['NombreUsuario'] ?? '',
+      role:      json['role'] ?? json['Role'] ?? json['rol'] ?? json['Rol'] ?? '',
+      expiresAt: json['expiresAt'] ?? json['ExpiresAt'],
     );
   }
 }
+

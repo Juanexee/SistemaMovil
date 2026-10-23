@@ -16,10 +16,10 @@ class MesaModel {
 
   factory MesaModel.fromJson(Map<String, dynamic> json) {
     return MesaModel(
-      id:        json['id']        ?? 0,
-      numero:    json['numero']    ?? 0,
-      capacidad: json['capacidad'] ?? 0,
-      estado:    json['estado']    ?? 'Libre',
+      id:        json['mesaID']     ?? json['id']     ?? 0,
+      numero:    json['numeroMesa'] ?? json['numero'] ?? 0,
+      capacidad: json['capacidad']  ?? 0,
+      estado:    json['estado']     ?? 'Disponible',
     );
   }
 

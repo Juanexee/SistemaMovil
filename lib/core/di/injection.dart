@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // injection.dart
 // Registro de TODAS las dependencias con GetIt
 // Orden: lo mas basico primero, luego lo que depende de eso
@@ -52,6 +52,7 @@ import '../../presentation/providers/user_provider.dart';
 import '../../presentation/providers/auth_provider.dart';
 import '../../presentation/providers/ventas_provider.dart';
 import '../../presentation/providers/pedidos_provider.dart';
+import '../../presentation/providers/inventario_provider.dart';
 
 // Instancia global del Service Locator
 // Uso: sl<UserService>() desde cualquier parte del codigo
@@ -192,5 +193,9 @@ void setupDependencies() {
 
   sl.registerFactory<PedidosProvider>(
     () => PedidosProvider(sl<VentasService>()),
+  );
+
+  sl.registerFactory<InventarioProvider>(
+    () => InventarioProvider(sl<InventarioService>()),
   );
 }

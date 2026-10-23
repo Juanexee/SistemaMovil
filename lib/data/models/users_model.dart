@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // users_model.dart
 // Modelo de usuario con fromJson y toJson
 // =========================================================
@@ -17,10 +17,10 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id:    json['id']    ?? 0,
-      name:  json['name']  ?? '',
-      email: json['email'] ?? '',
-      role:  json['role']  ?? '',
+      id:    json['usuarioID']     ?? json['id'] ?? 0,
+      name:  json['nombre']        ?? json['nombreUsuario'] ?? json['name'] ?? '',
+      email: json['nombreUsuario'] ?? json['email'] ?? '',
+      role:  json['rolNombre']     ?? (json['rolID'] != null ? 'Rol ${json['rolID']}' : '') ?? json['role'] ?? '',
     );
   }
 

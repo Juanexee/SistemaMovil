@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../core/di/injection.dart';
+import '../../../services/auditoria_service.dart';
+import '../../../services/dashboard_service.dart';
+import '../../../data/models/auditoria_model.dart';
+import '../../../data/models/dashboard_model.dart';
 
 class AuditLogsScreen extends StatefulWidget {
   const AuditLogsScreen({super.key});
@@ -10,6 +15,41 @@ class AuditLogsScreen extends StatefulWidget {
 class _AuditLogsScreenState extends State<AuditLogsScreen> {
   // Controlador para el buscador
   TextEditingController search_ctrl = TextEditingController();
+
+  bool _isLoading = false;
+  List<LogAuditoriaModel> _logs = [];
+  KpisModel? _kpis;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatos();
+  }
+
+  Future<void> _cargarDatos() async {
+    setState(() => _isLoading = true);
+    try {
+      final audService = sl<AuditoriaService>();
+      final dashService = sl<DashboardService>();
+
+      final results = await Future.wait([
+        audService.getLogs().catchError((_) => <LogAuditoriaModel>[]),
+        dashService.getKpis().catchError(
+          (_) => KpisModel(ventasDelDia: 0, ticketPromedio: 0, margenAcumulado: 0),
+        ),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _logs = results[0] as List<LogAuditoriaModel>;
+          _kpis = results[1] as KpisModel;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -179,16 +219,16 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              "Eventos de hoy",
+                              "Eventos cargados",
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 14,
                               ),
                             ),
                             const SizedBox(height: 10),
-                            const Text(
-                              '42',
-                              style: TextStyle(
+                            Text(
+                              '${_logs.length}',
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 36,
                                 fontWeight: FontWeight.bold,
@@ -198,13 +238,13 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                             Row(
                               children: [
                                 const Icon(
-                                  Icons.trending_up,
+                                  Icons.sync,
                                   color: Colors.white,
                                   size: 16,
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  '8.4% vs ayer',
+                                  'Conectado a la API',
                                   style: TextStyle(
                                     color: Colors.grey[300],
                                     fontSize: 12,
@@ -232,18 +272,18 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Alertas críticas',
+                              'Ventas de hoy',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
                               ),
                             ),
                             const SizedBox(height: 10),
-                            const Text(
-                              '02',
-                              style: TextStyle(
+                            Text(
+                              '\$${_kpis != null ? _kpis!.ventasDelDia.toStringAsFixed(2) : "0.00"}',
+                              style: const TextStyle(
                                 color: Colors.black87,
-                                fontSize: 36,
+                                fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -251,16 +291,16 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                             Row(
                               children: [
                                 Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: Colors.grey[500],
+                                  Icons.monetization_on_outlined,
+                                  color: Colors.green[600],
                                   size: 14,
                                 ),
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
-                                    'Requiere revisión',
+                                    'Ticket: \$${_kpis != null ? _kpis!.ticketPromedio.toStringAsFixed(2) : "0.00"}',
                                     style: TextStyle(
-                                      color: Colors.grey[500],
+                                      color: Colors.grey[600],
                                       fontSize: 11,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -291,7 +331,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                       ),
                     ),
                     Text(
-                      '5 registros',
+                      '${_logs.length} registros',
                       style: TextStyle(color: Colors.grey[500], fontSize: 13),
                     ),
                   ],
@@ -305,60 +345,61 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                 const SizedBox(height: 15),
 
                 // LISTA DE LOGS
-                Column(
-                  children: [
-                    _buildLogItem(
-                      icon: Icons.warning_amber_rounded,
-                      iconColor: Colors.red[400]!,
-                      title: 'Orden Anulada',
-                      subtitle: 'Orden #1045 - \$86.40',
-                      userInitials: 'MG',
-                      userName: 'Maria González',
-                      time: 'Hoy, 12:42 PM',
-                      isAlert: true,
+                if (_isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(30.0),
+                      child: CircularProgressIndicator(),
                     ),
-                    _buildLogItem(
-                      icon: Icons.check_circle_outline,
-                      iconColor: Colors.green[400]!,
-                      title: 'Caja Registradora Abierta',
-                      subtitle: 'Caja 01 - Turno iniciado',
-                      userInitials: 'CR',
-                      userName: 'Carlos Rivera',
-                      time: 'Hoy, 11:18 AM',
-                      isAlert: false,
+                  )
+                else if (_logs.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
                     ),
-                    _buildLogItem(
-                      icon: Icons.check_circle_outline,
-                      iconColor: Colors.green[400]!,
-                      title: 'Inventario Ajustado',
-                      subtitle: 'Tomates - -4 unids',
-                      userInitials: 'SM',
-                      userName: 'Sofia Martínez',
-                      time: 'Hoy, 10:08 AM',
-                      isAlert: false,
+                    child: Column(
+                      children: [
+                        Icon(Icons.inbox_outlined, size: 40, color: Colors.grey[400]),
+                        const SizedBox(height: 10),
+                        Text(
+                          'No hay eventos de auditoría registrados',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                        ),
+                      ],
                     ),
-                    _buildLogItem(
-                      icon: Icons.check_circle_outline,
-                      iconColor: Colors.green[400]!,
-                      title: 'Descuento Aplicado',
-                      subtitle: 'Orden #1043 - 15% descuento',
-                      userInitials: 'CR',
-                      userName: 'Carlos Rivera',
-                      time: 'Ayer, 8:36 PM',
-                      isAlert: false,
-                    ),
-                    _buildLogItem(
-                      icon: Icons.warning_amber_rounded,
-                      iconColor: Colors.red[400]!,
-                      title: 'Orden Anulada',
-                      subtitle: 'Orden #1042 - Aprobado por manager',
-                      userInitials: 'JL',
-                      userName: 'Jorge López',
-                      time: 'Ayer, 7:09 PM',
-                      isAlert: true,
-                    ),
-                  ],
-                ),
+                  )
+                else
+                  Column(
+                    children: _logs.map((log) {
+                      final isWarn = log.tipoEvento.toUpperCase() == 'ANULACION' ||
+                          log.tipoEvento.toUpperCase() == 'ERROR';
+                      final initial = log.usuarioResponsable.isNotEmpty
+                          ? log.usuarioResponsable.substring(0, 1).toUpperCase()
+                          : 'S';
+                      return _buildLogItem(
+                        icon: isWarn
+                            ? Icons.warning_amber_rounded
+                            : Icons.check_circle_outline,
+                        iconColor: isWarn ? Colors.red[400]! : Colors.green[400]!,
+                        title: log.descripcion.isNotEmpty
+                            ? log.descripcion
+                            : 'Evento: ${log.tipoEvento}',
+                        subtitle: '${log.modulo} • ${log.fecha}',
+                        userInitials: initial,
+                        userName: log.usuarioResponsable.isNotEmpty
+                            ? log.usuarioResponsable
+                            : 'Sistema',
+                        time: log.fecha.length > 10
+                            ? log.fecha.substring(0, 10)
+                            : log.fecha,
+                        isAlert: isWarn,
+                      );
+                    }).toList(),
+                  ),
 
                 const SizedBox(height: 20),
               ],

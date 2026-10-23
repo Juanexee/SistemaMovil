@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/di/injection.dart';
+import '../../../services/platillo_service.dart';
+import '../../../services/categoria_service.dart';
 
 class MenuCatalogScreen extends StatefulWidget {
   const MenuCatalogScreen({Key? key}) : super(key: key);
@@ -11,12 +14,62 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
   int _selectedCategoryIndex = 0;
   int _currentBottomIndex = 1; // 1 corresponde a Catálogo (activo)
 
+  bool _isLoading = false;
+
   final List<String> _categories = [
     'Platos Fuertes',
     'Entradas',
     'Bebidas',
     'Postres'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarMenu();
+  }
+
+  Future<void> _cargarMenu() async {
+    setState(() => _isLoading = true);
+    try {
+      final platillosFuture = sl<PlatilloService>().getPlatillos();
+      final categoriasFuture = sl<CategoriaService>().getCategorias();
+      final results = await Future.wait([platillosFuture, categoriasFuture]);
+
+      final platillos = results[0] as List;
+      final categorias = results[1] as List;
+
+      if (mounted) {
+        setState(() {
+          if (categorias.isNotEmpty) {
+            _categories.clear();
+            for (final c in categorias) {
+              if (c.activo) _categories.add(c.nombre);
+            }
+            if (_categories.isEmpty) {
+              _categories.addAll(['Platos Fuertes', 'Entradas', 'Bebidas', 'Postres']);
+            }
+          }
+          if (platillos.isNotEmpty) {
+            _dishes.clear();
+            for (final p in platillos) {
+              _dishes.add({
+                'title': p.nombre,
+                'description': p.descripcion.isNotEmpty
+                    ? p.descripcion
+                    : 'Delicioso platillo tradicional',
+                'price': 'C\$ ${p.precio.toStringAsFixed(2)}',
+                'image': 'assets/images/Carne Asada.jpg',
+              });
+            }
+          }
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   // Lista actualizada apuntando a las rutas locales en assets/images/
   final List<Map<String, String>> _dishes = [
@@ -243,9 +296,9 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
             color: Colors.grey,
           ),
         ),
-        const Text(
-          '3 productos',
-          style: TextStyle(
+        Text(
+          '${_dishes.length} productos',
+          style: const TextStyle(
             fontSize: 12,
             color: Colors.grey,
           ),
@@ -256,6 +309,14 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
 
   // 6. Tarjetas de Platillos con Image.asset
   Widget _buildDishList() {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(30.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     return ListView.builder(
       itemCount: _dishes.length,
       shrinkWrap: true,

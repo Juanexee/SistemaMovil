@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // dashboard_model.dart
 // Modelos para el dashboard gerencial (KPIs y tendencias)
 // Cubre RF-MOV-DSH-01 y RF-MOV-DSH-02
@@ -19,9 +19,9 @@ class KpisModel {
   factory KpisModel.fromJson(Map<String, dynamic> json) {
     return KpisModel(
       // .toDouble() porque la API puede mandar int o double
-      ventasDelDia:    (json['ventasDelDia']    ?? 0).toDouble(),
+      ventasDelDia:    (json['totalVentasHoy'] ?? json['ventasDelDia'] ?? 0).toDouble(),
       ticketPromedio:  (json['ticketPromedio']  ?? 0).toDouble(),
-      margenAcumulado: (json['margenAcumulado'] ?? 0).toDouble(),
+      margenAcumulado: (json['margenGananciaAcumulado'] ?? json['margenAcumulado'] ?? 0).toDouble(),
     );
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/di/injection.dart';
+import '../../../services/mesas_service.dart';
 
 void main() {
   runApp(const ElRanchoLaMimiApp());
@@ -35,7 +37,44 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
 
   final List<String> _filters = ['Todas', 'Libre', 'Ocupada', 'Por cobrar'];
 
-  // Datos de ejemplo para las mesas
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarMesas();
+  }
+
+  Future<void> _cargarMesas() async {
+    setState(() => _isLoading = true);
+    try {
+      final lista = await sl<MesasService>().getMesas();
+      if (lista.isNotEmpty && mounted) {
+        setState(() {
+          _tables.clear();
+          for (final m in lista) {
+            final isLibre = m.estado.toLowerCase() == 'disponible' ||
+                m.estado.toLowerCase() == 'libre';
+            _tables.add({
+              'name': 'Mesa 0${m.numero}',
+              'status': isLibre ? 'Libre' : m.estado,
+              'detail': 'Capacidad: ${m.capacidad} personas',
+              'waiterInitials': 'MR',
+              'waiterName': 'Mimi Restaurante',
+              'type': isLibre ? 'Libre' : m.estado,
+            });
+          }
+          _isLoading = false;
+        });
+      } else if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // Datos de ejemplo para las mesas (fallback si no hay red)
   final List<Map<String, dynamic>> _tables = [
     {
       'name': 'Mesa 02',
@@ -424,6 +463,14 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
 
   // 6. Cuadrícula de tarjetas de mesas (Grid de 2 columnas)
   Widget _buildTableGrid() {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(30.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     return GridView.builder(
       itemCount: _filteredTables.length,
       shrinkWrap: true,

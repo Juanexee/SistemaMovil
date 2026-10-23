@@ -224,6 +224,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           passController.text.trim(),
                         );
 
+                        if (!mounted) return;
+
                         if (exito) {
                           // 2. Obtenemos el rol real que devolvió el servidor en Azure
                           String rol =
