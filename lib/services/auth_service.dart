@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // auth_service.dart
 // Logica de autenticacion y control de roles (RBAC)
 // Cubre RF-MOV-AUT-01, RF-MOV-AUT-02, RF-MOV-AUT-03
@@ -14,8 +14,8 @@ class AuthService {
   AuthService(this._authRepository, this._storage);
 
   // Inicia sesion: manda las credenciales y guarda el token
-  Future<LoginResponse> login(String email, String password) async {
-    final request = LoginRequest(email: email, password: password);
+  Future<LoginResponse> login(String usuario, String password) async {
+    final request = LoginRequest(usuario: usuario, password: password);
     return await _authRepository.login(request);
   }
 
