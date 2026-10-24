@@ -53,13 +53,16 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
           if (platillos.isNotEmpty) {
             _dishes.clear();
             for (final p in platillos) {
+              // imageUrl: URL/Base64 de la API; image: fallback asset local
               _dishes.add({
                 'title': p.nombre,
                 'description': p.descripcion.isNotEmpty
                     ? p.descripcion
                     : 'Delicioso platillo tradicional',
                 'price': 'C\$ ${p.precio.toStringAsFixed(2)}',
+                'imageUrl': p.imagenUrl ?? '',
                 'image': 'assets/images/Carne Asada.jpg',
+                'categoria': p.categoriaNombre ?? '',
               });
             }
           }
@@ -342,20 +345,7 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12.0),
-                child: Image.asset(
-                  dish['image']!,
-                  width: 70,
-                  height: 70,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 70,
-                      height: 70,
-                      color: Colors.grey.shade200,
-                      child: const Icon(Icons.image_not_supported, color: Colors.grey),
-                    );
-                  },
-                ),
+                child: _buildDishImage(dish),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -411,4 +401,55 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
     );
   }
 
-}
+  // Construye la imagen del platillo: usa URL de la API si existe, si no usa asset local
+  Widget _buildDishImage(Map<String, String> dish) {
+    final imageUrl = dish['imageUrl'] ?? '';
+    const double size = 70;
+
+    if (imageUrl.isNotEmpty && imageUrl.startsWith('http')) {
+      return Image.network(
+        imageUrl,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        loadingBuilder: (ctx, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            width: size,
+            height: size,
+            color: Colors.grey.shade100,
+            child: const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        },
+        errorBuilder: (ctx, err, st) => _imagePlaceholder(size),
+      );
+    }
+
+    // Fallback: asset local
+    return Image.asset(
+      dish['image'] ?? 'assets/images/Carne Asada.jpg',
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      errorBuilder: (ctx, err, st) => _imagePlaceholder(size),
+    );
+  }
+
+  Widget _imagePlaceholder(double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(Icons.restaurant, color: Colors.grey, size: 30),
+    );
+  }
+}

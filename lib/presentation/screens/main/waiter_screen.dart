@@ -21,8 +21,8 @@ class _WaiterScreenState extends State<WaiterScreen> {
     // Lista con las vistas específicas para el Mesero, se inicializa aquí para poder pasar el context
     final List<Widget> screens = [
       TableManagementScreen(
-        onTableTap: () {
-          // Navegamos hacia la pantalla de Comanda por encima de la barra de navegación
+        onTableTap: (mesa) {
+          // Recibimos la mesa seleccionada y navegamos a la pantalla de Comanda
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const OrderCartScreen()),

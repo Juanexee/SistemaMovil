@@ -2,29 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../core/di/injection.dart';
 import '../../../services/mesas_service.dart';
 
-void main() {
-  runApp(const ElRanchoLaMimiApp());
-}
-
-class ElRanchoLaMimiApp extends StatelessWidget {
-  const ElRanchoLaMimiApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'El Rancho La Mimi',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-        fontFamily: 'Roboto',
-      ),
-      home: const TableManagementScreen(),
-    );
-  }
-}
-
 class TableManagementScreen extends StatefulWidget {
-  final VoidCallback? onTableTap; // Agregamos este callback
+  // onTableTap recibe el mapa completo de la mesa seleccionada
+  final void Function(Map<String, dynamic> mesa)? onTableTap;
   const TableManagementScreen({Key? key, this.onTableTap}) : super(key: key);
 
   @override
@@ -506,7 +486,11 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
         return GestureDetector(
           onTap: () {
             if (widget.onTableTap != null) {
-              widget.onTableTap!();
+              // Pasamos la mesa completa al callback (por ej. para abrir la comanda)
+              widget.onTableTap!(table);
+            } else {
+              // Si no hay callback externo, mostramos el detalle aquí mismo
+              _showTableDetail(context, table, statusColor, badgeBgColor);
             }
           },
           child: Container(
@@ -645,6 +629,139 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
           ),
         );
       },
+    );
+  }
+
+  // BottomSheet con el detalle de la mesa seleccionada
+  void _showTableDetail(
+    BuildContext context,
+    Map<String, dynamic> table,
+    Color statusColor,
+    Color badgeBgColor,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Nombre de la mesa y badge de estado
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  table['name'] as String,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2E221E),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: badgeBgColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    table['status'] as String,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Detalle de la mesa
+            _detailRow(Icons.info_outline, 'Detalle',
+                table['detail'] as String),
+            const SizedBox(height: 12),
+            _detailRow(
+              Icons.person_outline,
+              'Mesero asignado',
+              table['waiterName'] as String,
+            ),
+            const Divider(height: 32),
+
+            // Botón de acción principal
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF38231C),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  (table['status'] == 'Libre')
+                      ? 'Asignar mesa'
+                      : 'Ver comanda',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: Colors.grey),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 11, color: Colors.grey)),
+              const SizedBox(height: 2),
+              Text(value,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2E221E))),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
