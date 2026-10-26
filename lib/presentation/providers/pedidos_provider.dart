@@ -58,4 +58,13 @@ class PedidosProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  // Limpia los datos almacenados al cerrar sesión o cambiar de usuario
+  void clear() {
+    _pedidos = [];
+    _errorMessage = '';
+    _isLoading = false;
+    notifyListeners();
+  }
 }
+

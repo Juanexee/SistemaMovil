@@ -186,13 +186,23 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.red.shade50,
+                              color: Colors.amber.shade50,
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.amber.shade200),
                             ),
-                            child: Text(
-                              'Usando datos de ejemplo: ${provider.errorMessage}',
-                              style: TextStyle(
-                                  color: Colors.red.shade700, fontSize: 11),
+                            child: Row(
+                              children: [
+                                Icon(Icons.info_outline,
+                                    size: 16, color: Colors.amber.shade800),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    provider.errorMessage,
+                                    style: TextStyle(
+                                        color: Colors.amber.shade900, fontSize: 12),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

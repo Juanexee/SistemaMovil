@@ -8,7 +8,7 @@ import '../audit/audit_screen.dart';
 import '../user/user_screen.dart';
 
 class ManagerScreen extends StatefulWidget {
-  const ManagerScreen({Key? key}) : super(key: key);
+  const ManagerScreen({super.key});
 
   @override
   State<ManagerScreen> createState() => _ManagerScreenState();

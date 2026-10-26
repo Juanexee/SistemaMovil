@@ -228,20 +228,38 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         ),
                       )
                     else ...[
-                      // ERROR (con aviso pero no bloquea)
-                      if (provider.errorMessage.isNotEmpty)
+                      // AVISO INFORMATIVO DE PERMISOS / ERROR
+                      if (provider.errorMessage.isNotEmpty && provider.ventas.isEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.only(bottom: 16),
                           child: Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                             decoration: BoxDecoration(
-                              color: Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(8),
+                              color: const Color(0xFFFFF8E1),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFFFD54F)),
                             ),
-                            child: Text(
-                              provider.errorMessage,
-                              style: TextStyle(
-                                  color: Colors.red.shade700, fontSize: 11),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.info_outline,
+                                  color: Color(0xFFE65100),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    provider.errorMessage,
+                                    style: const TextStyle(
+                                      color: Color(0xFF5D4037),
+                                      fontSize: 12,
+                                      height: 1.3,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -353,20 +371,28 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                       // HEADER DE LA LISTA
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const Text(
-                            'HISTORIAL DE TRANSACCIONES',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                              letterSpacing: 1.2,
-                              fontWeight: FontWeight.bold,
+                          const Expanded(
+                            child: Text(
+                              'HISTORIAL DE TRANSACCIONES',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 11,
+                                letterSpacing: 1.1,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             'Total: C\$ ${filtered.fold<double>(0, (s, v) => s + v.total).toStringAsFixed(2)}',
                             style: TextStyle(
-                                color: Colors.grey[500], fontSize: 13),
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),

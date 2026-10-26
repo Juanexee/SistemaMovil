@@ -1,96 +1,58 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const ElRanchoLaMimiApp());
-}
-
-class ElRanchoLaMimiApp extends StatelessWidget {
-  const ElRanchoLaMimiApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'El Rancho La Mimi',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-        fontFamily: 'Roboto',
-      ),
-      home: const OrderCartScreen(),
-    );
-  }
-}
+import '../../../services/order_cart_manager.dart';
 
 class OrderCartScreen extends StatefulWidget {
-  const OrderCartScreen({Key? key}) : super(key: key);
+  final Map<String, dynamic>? mesa;
+  const OrderCartScreen({super.key, this.mesa});
 
   @override
   State<OrderCartScreen> createState() => _OrderCartScreenState();
 }
 
 class _OrderCartScreenState extends State<OrderCartScreen> {
-  int _currentBottomIndex = 2; // 2 corresponde a Órdenes / Comanda (activo)
-
-
-  final List<Map<String, dynamic>> _cartItems = [
-    {
-      'title': 'Carne Asada Especial',
-      'note': 'Sin cebolla, término medio',
-      'pricePerUnit': 240.0,
-      'quantity': 1,
-    },
-    {
-      'title': 'Tacos de Pollo',
-      'note': 'Con guacamole y crema',
-      'pricePerUnit': 320.0,
-      'quantity': 2,
-    },
-    {
-      'title': 'Limonada Natural',
-      'note': 'Sin azúcar',
-      'pricePerUnit': 90.0,
-      'quantity': 2,
-    },
-  ];
-
-  double get _subtotal {
-    return _cartItems.fold(
-        0.0, (sum, item) => sum + (item['pricePerUnit'] * item['quantity']));
-  }
-
-  double get _tax => _subtotal * 0.15; // IVA estimado 15%
-  double get _totalGeneral => _subtotal + _tax;
+  final _cartManager = OrderCartManager();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTopBar(),
-              const SizedBox(height: 12),
-              _buildOfflineBanner(),
-              const SizedBox(height: 16),
-              _buildTableHeaderSection(),
-              const SizedBox(height: 16),
-              _buildCartItemList(),
-              const SizedBox(height: 16),
-              _buildFinancialSummaryCard(),
-              const SizedBox(height: 20),
-              _buildSubmitButton(),
-              const SizedBox(height: 30),
-            ],
+    return ListenableBuilder(
+      listenable: _cartManager,
+      builder: (context, _) {
+        final items = _cartManager.items;
+        final subtotal = _cartManager.subtotal;
+        final tax = subtotal * 0.15; // IVA 15%
+        final totalGeneral = subtotal + tax;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8F9FA),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTopBar(),
+                  const SizedBox(height: 12),
+                  _buildOfflineBanner(),
+                  const SizedBox(height: 16),
+                  _buildTableHeaderSection(),
+                  const SizedBox(height: 16),
+                  _buildCartItemList(items),
+                  const SizedBox(height: 16),
+                  _buildFinancialSummaryCard(subtotal, tax, totalGeneral),
+                  const SizedBox(height: 20),
+                  _buildSubmitButton(items),
+                  const SizedBox(height: 30),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  
-  // 1. Top Bar superior (Ajustado con la imagen mimi2.png)
+  // 1. Top Bar superior
   Widget _buildTopBar() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -142,7 +104,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
             ),
             const SizedBox(width: 6),
             const Text(
-              'Online',
+              'En línea',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(width: 12),
@@ -157,7 +119,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
     );
   }
 
-  // 2. Banner superior de estado Offline-First
+  // 2. Banner superior de estado
   Widget _buildOfflineBanner() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -183,27 +145,62 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
     );
   }
 
-  
+  // 3. Cabecera con datos de la mesa seleccionada
   Widget _buildTableHeaderSection() {
+    final mesaName = widget.mesa?['name'] ?? 'Mesa 01';
+    final waiterName = widget.mesa?['waiterName'] ?? 'Carlos Rivera';
+    final waiterInitials = widget.mesa?['waiterInitials'] ?? 'CR';
+    final status = widget.mesa?['status'] ?? 'Ocupada';
+
+    Color statusColor = Colors.green;
+    Color badgeBgColor = const Color(0xFFE8F5E9);
+    if (status == 'Ocupada') {
+      statusColor = Colors.orange;
+      badgeBgColor = const Color(0xFFFFF3E0);
+    } else if (status == 'Por cobrar') {
+      statusColor = Colors.blue;
+      badgeBgColor = const Color(0xFFE3F2FD);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'RESUMEN DE COMANDA',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey,
-            letterSpacing: 1.2,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'RESUMEN DE COMANDA',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+                letterSpacing: 1.2,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: badgeBgColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                status,
+                style: TextStyle(
+                  color: statusColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 6),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Mesa 04',
-              style: TextStyle(
+            Text(
+              mesaName,
+              style: const TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF2E221E),
@@ -225,10 +222,10 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                       color: Color(0xFF2E221E),
                       shape: BoxShape.circle,
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
-                        'CR',
-                        style: TextStyle(
+                        waiterInitials,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -237,9 +234,9 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  const Text(
-                    'Atiende: Carlos R.',
-                    style: TextStyle(
+                  Text(
+                    'Atiende: $waiterName',
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF2E221E),
@@ -254,15 +251,45 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
     );
   }
 
-  
-  Widget _buildCartItemList() {
+  // 4. Lista de platillos en la orden
+  Widget _buildCartItemList(List<Map<String, dynamic>> cartItems) {
+    if (cartItems.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(30.0),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.remove_shopping_cart_outlined,
+                size: 48, color: Colors.grey.shade400),
+            const SizedBox(height: 12),
+            Text(
+              'No hay platillos en la comanda',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Selecciona productos en el catálogo con el botón (+)',
+              style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
-      itemCount: _cartItems.length,
+      itemCount: cartItems.length,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, index) {
-        final item = _cartItems[index];
-        final double itemTotal = item['pricePerUnit'] * item['quantity'];
+        final item = cartItems[index];
+        final price = (item['pricePerUnit'] as num).toDouble();
+        final quantity = item['quantity'] as int;
+        final double itemTotal = price * quantity;
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12.0),
@@ -273,7 +300,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
             border: Border.all(color: Colors.grey.shade200),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -285,21 +312,22 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    item['title'],
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E221E),
+                  Expanded(
+                    child: Text(
+                      item['title'],
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2E221E),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline_rounded,
-                        color: Colors.grey, size: 20),
+                        color: Colors.redAccent, size: 20),
                     onPressed: () {
-                      setState(() {
-                        _cartItems.removeAt(index);
-                      });
+                      _cartManager.removeItem(index);
                     },
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
@@ -308,7 +336,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
               ),
               const SizedBox(height: 2),
               Text(
-                item['note'],
+                item['note'] ?? 'Sin nota especial',
                 style: const TextStyle(
                   fontSize: 12,
                   color: Colors.grey,
@@ -330,11 +358,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                           icon: const Icon(Icons.remove, size: 16),
                           color: const Color(0xFF2E221E),
                           onPressed: () {
-                            setState(() {
-                              if (item['quantity'] > 1) {
-                                item['quantity']--;
-                              }
-                            });
+                            _cartManager.updateQuantity(index, -1);
                           },
                           constraints: const BoxConstraints(
                               minWidth: 32, minHeight: 32),
@@ -343,7 +367,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: Text(
-                            '${item['quantity']}',
+                            '$quantity',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -355,9 +379,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                           icon: const Icon(Icons.add, size: 16),
                           color: const Color(0xFF2E221E),
                           onPressed: () {
-                            setState(() {
-                              item['quantity']++;
-                            });
+                            _cartManager.updateQuantity(index, 1);
                           },
                           constraints: const BoxConstraints(
                               minWidth: 32, minHeight: 32),
@@ -384,7 +406,8 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
   }
 
   // 5. Tarjeta de Resumen Financiero
-  Widget _buildFinancialSummaryCard() {
+  Widget _buildFinancialSummaryCard(
+      double subtotal, double tax, double totalGeneral) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -393,7 +416,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -409,7 +432,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                 style: TextStyle(fontSize: 13, color: Colors.grey),
               ),
               Text(
-                'C\$ ${_subtotal.toStringAsFixed(2)}',
+                'C\$ ${subtotal.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -427,7 +450,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                 style: TextStyle(fontSize: 13, color: Colors.grey),
               ),
               Text(
-                'C\$ ${_tax.toStringAsFixed(2)}',
+                'C\$ ${tax.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -452,7 +475,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                 ),
               ),
               Text(
-                'C\$ ${_totalGeneral.toStringAsFixed(2)}',
+                'C\$ ${totalGeneral.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -467,19 +490,56 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
   }
 
   // 6. Botón principal de acción inferior
-  Widget _buildSubmitButton() {
+  Widget _buildSubmitButton(List<Map<String, dynamic>> items) {
+    final mesaName = widget.mesa?['name'] ?? 'Mesa 01';
+    final hasItems = items.isNotEmpty;
+
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2E221E),
+          backgroundColor:
+              hasItems ? const Color(0xFF2E221E) : Colors.grey.shade400,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
           ),
           elevation: 0,
         ),
-        onPressed: () {},
+        onPressed: hasItems
+            ? () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    title: Row(
+                      children: const [
+                        Icon(Icons.check_circle_outline,
+                            color: Colors.green, size: 28),
+                        SizedBox(width: 8),
+                        Text('Comanda enviada'),
+                      ],
+                    ),
+                    content: Text(
+                        'La comanda para $mesaName ha sido enviada a cocina con éxito.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _cartManager.clear();
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Aceptar',
+                            style: TextStyle(
+                                color: Color(0xFF38231C),
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            : null,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
@@ -498,5 +558,4 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
       ),
     );
   }
-
 }

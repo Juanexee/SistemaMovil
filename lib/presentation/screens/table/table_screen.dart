@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../core/di/injection.dart';
 import '../../../services/mesas_service.dart';
+import '../order/order_card_screen.dart';
 
 class TableManagementScreen extends StatefulWidget {
   // onTableTap recibe el mapa completo de la mesa seleccionada
   final void Function(Map<String, dynamic> mesa)? onTableTap;
-  const TableManagementScreen({Key? key, this.onTableTap}) : super(key: key);
+  const TableManagementScreen({super.key, this.onTableTap});
 
   @override
   State<TableManagementScreen> createState() => _TableManagementScreenState();
@@ -13,10 +14,7 @@ class TableManagementScreen extends StatefulWidget {
 
 class _TableManagementScreenState extends State<TableManagementScreen> {
   int _selectedFilterIndex = 0;
-  int _currentBottomIndex = 1; // 1 corresponde a "Catálogo" (activo)
-
   final List<String> _filters = ['Todas', 'Libre', 'Ocupada', 'Por cobrar'];
-
   bool _isLoading = false;
 
   @override
@@ -35,13 +33,20 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
           for (final m in lista) {
             final isLibre = m.estado.toLowerCase() == 'disponible' ||
                 m.estado.toLowerCase() == 'libre';
+            final isOcupada = m.estado.toLowerCase() == 'ocupada';
+            final status =
+                isLibre ? 'Libre' : (isOcupada ? 'Ocupada' : m.estado);
+
             _tables.add({
-              'name': 'Mesa 0${m.numero}',
-              'status': isLibre ? 'Libre' : m.estado,
+              'id': m.id,
+              'numero': m.numero,
+              'name': 'Mesa ${m.numero.toString().padLeft(2, '0')}',
+              'status': status,
+              'capacidad': m.capacidad,
               'detail': 'Capacidad: ${m.capacidad} personas',
               'waiterInitials': 'MR',
-              'waiterName': 'Mimi Restaurante',
-              'type': isLibre ? 'Libre' : m.estado,
+              'waiterName': 'El Rancho La Mimi',
+              'type': status,
             });
           }
           _isLoading = false;
@@ -54,51 +59,69 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
     }
   }
 
-  // Datos de ejemplo para las mesas (fallback si no hay red)
+  // Datos de mesas (se actualizan desde la API o fallback si no hay conexión)
   final List<Map<String, dynamic>> _tables = [
     {
+      'id': 1,
+      'numero': 1,
+      'name': 'Mesa 01',
+      'status': 'Libre',
+      'capacidad': 4,
+      'detail': 'Lista para recibir clientes',
+      'waiterInitials': 'CR',
+      'waiterName': 'Carlos Rivera',
+      'type': 'Libre',
+    },
+    {
+      'id': 2,
+      'numero': 2,
       'name': 'Mesa 02',
       'status': 'Ocupada',
+      'capacidad': 4,
       'detail': 'Comanda activa - Hace 25 min',
       'waiterInitials': 'AL',
       'waiterName': 'Ana López',
       'type': 'Ocupada',
     },
     {
-      'name': 'Mesa 01',
-      'status': 'Libre',
-      'detail': 'Lista para recibir clientes',
-      'waiterInitials': 'CR',
-      'waiterName': 'Carlos Rivera',
-      'type': 'Libre',
-    },
-    {
-      'name': 'Mesa 04',
-      'status': 'Ocupada',
-      'detail': 'Comanda activa - Hace 12 min',
-      'waiterInitials': 'MR',
-      'waiterName': 'María Ruiz',
-      'type': 'Ocupada',
-    },
-    {
+      'id': 3,
+      'numero': 3,
       'name': 'Mesa 03',
       'status': 'Por cobrar',
+      'capacidad': 2,
       'detail': 'Total C\$ 348.00',
       'waiterInitials': 'CR',
       'waiterName': 'Carlos Rivera',
       'type': 'Por cobrar',
     },
     {
+      'id': 4,
+      'numero': 4,
+      'name': 'Mesa 04',
+      'status': 'Ocupada',
+      'capacidad': 6,
+      'detail': 'Comanda activa - Hace 12 min',
+      'waiterInitials': 'MR',
+      'waiterName': 'María Ruiz',
+      'type': 'Ocupada',
+    },
+    {
+      'id': 5,
+      'numero': 5,
       'name': 'Mesa 05',
       'status': 'Libre',
+      'capacidad': 4,
       'detail': 'Lista para recibir clientes',
       'waiterInitials': 'CR',
       'waiterName': 'Carlos Rivera',
       'type': 'Libre',
     },
     {
+      'id': 6,
+      'numero': 6,
       'name': 'Mesa VIP 06',
       'status': 'Ocupada',
+      'capacidad': 8,
       'detail': 'Comanda activa - Hace 42 min',
       'waiterInitials': 'AL',
       'waiterName': 'Ana López',
@@ -142,7 +165,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
     );
   }
 
-  // 1. Top Bar superior (Ajustado con la imagen mimi2.png)
+  // 1. Top Bar superior
   Widget _buildTopBar() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -191,17 +214,21 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(width: 16),
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: const Icon(
-                Icons.notifications_none_rounded,
-                color: Color(0xFF2E221E),
-                size: 22,
+            InkWell(
+              onTap: _cargarMesas,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: const Icon(
+                  Icons.refresh_rounded,
+                  color: Color(0xFF2E221E),
+                  size: 22,
+                ),
               ),
             ),
           ],
@@ -235,15 +262,19 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
         ),
         SizedBox(height: 4),
         Text(
-          'Selecciona una mesa para tomar o revisar comanda',
+          'Toca cualquier mesa para ver su información y gestionar comanda',
           style: TextStyle(fontSize: 13, color: Colors.grey),
         ),
       ],
     );
   }
 
-  // 3. Tarjetas de resumen superior (KPIs)
+  // 3. Tarjetas de resumen superior (KPIs dinámicos)
   Widget _buildKpiCards() {
+    final totalMesas = _tables.length;
+    final libres = _tables.where((t) => t['status'] == 'Libre').length;
+    final enOperacion = totalMesas - libres;
+
     return Row(
       children: [
         // Tarjeta Oscura
@@ -275,19 +306,20 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
-                  children: const [
+                  children: [
                     Text(
-                      '6',
-                      style: TextStyle(
+                      '$enOperacion',
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
-                      '/ 12',
-                      style: TextStyle(fontSize: 14, color: Colors.white60),
+                      '/ $totalMesas',
+                      style:
+                          const TextStyle(fontSize: 14, color: Colors.white60),
                     ),
                   ],
                 ),
@@ -326,17 +358,17 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
-                  children: const [
+                  children: [
                     Text(
-                      '6',
-                      style: TextStyle(
+                      '$libres',
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.green,
                       ),
                     ),
-                    SizedBox(width: 6),
-                    Text(
+                    const SizedBox(width: 6),
+                    const Text(
                       'libres',
                       style: TextStyle(
                         fontSize: 13,
@@ -354,7 +386,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
     );
   }
 
-  // 4. Filtros rápidos deslizables (Chips horizontales)
+  // 4. Filtros rápidos deslizables
   Widget _buildFilterChips() {
     return SizedBox(
       height: 38,
@@ -394,8 +426,8 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                           color: index == 1
                               ? Colors.green
                               : index == 2
-                              ? Colors.orange
-                              : Colors.blue,
+                                  ? Colors.orange
+                                  : Colors.blue,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -441,7 +473,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
     );
   }
 
-  // 6. Cuadrícula de tarjetas de mesas (Grid de 2 columnas)
+  // 6. Cuadrícula de tarjetas de mesas
   Widget _buildTableGrid() {
     if (_isLoading) {
       return const Center(
@@ -463,7 +495,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
       ),
       itemBuilder: (context, index) {
         final table = _filteredTables[index];
-        final status = table['status'] as String;
+        final status = (table['status'] as String?) ?? 'Libre';
 
         Color statusColor;
         Color badgeBgColor;
@@ -484,14 +516,9 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
         }
 
         return GestureDetector(
+          // Al tocar cualquier mesa, SIEMPRE se muestra la información de ESA mesa
           onTap: () {
-            if (widget.onTableTap != null) {
-              // Pasamos la mesa completa al callback (por ej. para abrir la comanda)
-              widget.onTableTap!(table);
-            } else {
-              // Si no hay callback externo, mostramos el detalle aquí mismo
-              _showTableDetail(context, table, statusColor, badgeBgColor);
-            }
+            _showTableDetail(context, table, statusColor, badgeBgColor);
           },
           child: Container(
             decoration: BoxDecoration(
@@ -500,7 +527,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
               border: Border.all(color: Colors.grey.shade200),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
+                  color: Colors.black.withValues(alpha: 0.02),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -563,7 +590,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              table['detail'],
+                              table['detail'] ?? 'Detalles de la mesa',
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Colors.grey,
@@ -589,7 +616,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    table['waiterInitials'],
+                                    table['waiterInitials'] ?? 'MR',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 9,
@@ -602,7 +629,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                               SizedBox(
                                 width: 65,
                                 child: Text(
-                                  table['waiterName'],
+                                  table['waiterName'] ?? 'Mesero',
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
@@ -615,9 +642,9 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                             ],
                           ),
                           const Icon(
-                            Icons.more_vert_rounded,
+                            Icons.arrow_forward_ios_rounded,
                             color: Colors.grey,
-                            size: 18,
+                            size: 14,
                           ),
                         ],
                       ),
@@ -632,13 +659,38 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
     );
   }
 
-  // BottomSheet con el detalle de la mesa seleccionada
+  // BottomSheet con el detalle completo de la mesa seleccionada
   void _showTableDetail(
     BuildContext context,
     Map<String, dynamic> table,
     Color statusColor,
     Color badgeBgColor,
   ) {
+    final status = table['status'] as String? ?? 'Libre';
+    final tableName = table['name'] as String? ?? 'Mesa';
+    final capacidad = table['capacidad']?.toString() ?? '4';
+    final waiterName = table['waiterName'] as String? ?? 'Carlos Rivera';
+    final detail = table['detail'] as String? ?? '';
+
+    String actionText = 'Ver comanda';
+    if (status == 'Libre') {
+      actionText = 'Tomar orden / Asignar mesa';
+    } else if (status == 'Por cobrar') {
+      actionText = 'Ver cuenta y cobrar';
+    }
+
+    String statusDescription = '';
+    if (status == 'Libre') {
+      statusDescription =
+          'Esta mesa está libre y lista para recibir clientes y tomar comanda.';
+    } else if (status == 'Ocupada') {
+      statusDescription =
+          'Esta mesa tiene clientes atendidos y una comanda activa en servicio.';
+    } else {
+      statusDescription =
+          'Los comensales de esta mesa han solicitado la cuenta para pago.';
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -670,23 +722,50 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  table['name'] as String,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2E221E),
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F0EE),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.table_restaurant_rounded,
+                        color: Color(0xFF2E221E),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tableName,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2E221E),
+                          ),
+                        ),
+                        Text(
+                          'Capacidad para $capacidad comensales',
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: badgeBgColor,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    table['status'] as String,
+                    status,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -696,18 +775,48 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 18),
+
+            // Descripción del estado
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F9FA),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 18, color: statusColor),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      statusDescription,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade700,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
 
-            // Detalle de la mesa
-            _detailRow(Icons.info_outline, 'Detalle',
-                table['detail'] as String),
+            // Detalle de la mesa y mesero
+            _detailRow(
+              Icons.format_list_bulleted_rounded,
+              'Detalle de la mesa',
+              detail.isNotEmpty ? detail : 'Sin consumo registrado',
+            ),
             const SizedBox(height: 12),
             _detailRow(
-              Icons.person_outline,
-              'Mesero asignado',
-              table['waiterName'] as String,
+              Icons.person_pin_rounded,
+              'Mesero a cargo',
+              waiterName,
             ),
-            const Divider(height: 32),
+            const Divider(height: 28),
 
             // Botón de acción principal
             SizedBox(
@@ -719,17 +828,38 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
+                  elevation: 0,
                 ),
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  (table['status'] == 'Libre')
-                      ? 'Asignar mesa'
-                      : 'Ver comanda',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                onPressed: () {
+                  Navigator.pop(context); // Cierra el modal de detalle
+                  if (widget.onTableTap != null) {
+                    // Si el padre tiene un handler personalizado, lo ejecutamos pasándole esta mesa
+                    widget.onTableTap!(table);
+                  } else {
+                    // Por defecto, navegamos a la pantalla de la comanda de ESA mesa
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OrderCartScreen(mesa: table),
+                      ),
+                    );
+                  }
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.receipt_long_rounded,
+                        color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      actionText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -750,14 +880,16 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label,
-                  style: const TextStyle(
-                      fontSize: 11, color: Colors.grey)),
+                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
               const SizedBox(height: 2),
-              Text(value,
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2E221E))),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2E221E),
+                ),
+              ),
             ],
           ),
         ),

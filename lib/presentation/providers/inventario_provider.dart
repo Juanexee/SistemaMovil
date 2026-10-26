@@ -4,12 +4,14 @@
 // =========================================================
 import 'package:flutter/material.dart';
 import '../../services/inventario_service.dart';
+import '../../services/insumos_service.dart';
 import '../../data/models/inventario_model.dart';
 
 class InventarioProvider extends ChangeNotifier {
   final InventarioService _inventarioService;
+  final InsumosService? _insumosService;
 
-  InventarioProvider(this._inventarioService);
+  InventarioProvider(this._inventarioService, [this._insumosService]);
 
   bool _isLoading = false;
   ResumenInventarioModel? _resumen;
@@ -28,20 +30,79 @@ class InventarioProvider extends ChangeNotifier {
     _errorMessage = '';
     notifyListeners();
 
+    bool resumenOk = false;
+    bool alertasOk = false;
+
+    // 1. Intentamos obtener resumen y alertas del endpoint de InventarioMovil
     try {
+      _resumen = await _inventarioService.getResumen();
+      resumenOk = true;
+    } catch (_) {}
+
+    try {
+      _alertas = await _inventarioService.getAlertas();
+      alertasOk = true;
+    } catch (_) {}
+
+    // 2. Si alguno falló (por ejemplo por error 500 en la base de datos de Azure),
+    // usamos InsumosService como fallback para calcular el inventario real
+    if ((!resumenOk || !alertasOk) && _insumosService != null) {
       try {
-        _resumen = await _inventarioService.getResumen();
-      } catch (e) {
-        _errorMessage = 'Resumen no disponible: $e';
+        final insumos = await _insumosService.getInsumos();
+        if (insumos.isNotEmpty) {
+          final totalInsumos = insumos.length;
+          final valoracionTotal = insumos.fold<double>(
+            0.0,
+            (sum, item) => sum + (item.stock * item.precioUnitario),
+          );
+          final alertasCalculadas = insumos
+              .where((i) => i.stock <= i.stockMinimo)
+              .map((i) => AlertaStockModel(
+                    id: i.id,
+                    nombre: i.nombre,
+                    stockActual: i.stock,
+                    stockMinimo: i.stockMinimo,
+                    unidadMedida: i.unidadMedidaNombre ?? 'Unidades',
+                  ))
+              .toList();
+          final tasaAlerta = totalInsumos > 0
+              ? (alertasCalculadas.length / totalInsumos) * 100
+              : 0.0;
+
+          if (!resumenOk) {
+            _resumen = ResumenInventarioModel(
+              totalInsumos: totalInsumos,
+              valoracionTotal: valoracionTotal,
+              tasaAlerta: tasaAlerta,
+            );
+          }
+          if (!alertasOk) {
+            _alertas = alertasCalculadas;
+          }
+          // Si obtuvimos los insumos con éxito, no mostramos error al usuario
+          _errorMessage = '';
+        }
+      } catch (fallbackError) {
+        if (_resumen == null && _alertas.isEmpty) {
+          _errorMessage =
+              'No fue posible sincronizar el inventario con el servidor.';
+        }
       }
-      try {
-        _alertas = await _inventarioService.getAlertas();
-      } catch (e) {
-        _errorMessage = (_errorMessage.isEmpty ? '' : '$_errorMessage | ') + 'Alertas: $e';
-      }
-    } finally {
-      _isLoading = false;
-      notifyListeners(); // La pantalla se refresca automáticamente con la info de la API
+    } else if (!resumenOk && !alertasOk && _resumen == null) {
+      _errorMessage =
+          'No fue posible sincronizar el inventario con el servidor.';
     }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // Limpia los datos almacenados al cerrar sesión o cambiar de usuario
+  void clear() {
+    _resumen = null;
+    _alertas = [];
+    _errorMessage = '';
+    _isLoading = false;
+    notifyListeners();
   }
 }

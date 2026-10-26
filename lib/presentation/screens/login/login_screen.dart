@@ -218,6 +218,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           context,
                           listen: false,
                         );
+                        final messenger = ScaffoldMessenger.of(context);
+                        final navigator = Navigator.of(context);
 
                         bool exito = await authProvider.login(
                           user_ctrl.text.trim(),
@@ -225,6 +227,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
 
                         if (!mounted) return;
+                        messenger.clearSnackBars();
 
                         if (exito) {
                           // 2. Obtenemos el rol real que devolvió el servidor en Azure
@@ -234,26 +237,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // 3. Redirigimos según el rol de la base de datos
                           if (rol == 'gerente' || rol == 'administrador') {
-                            Navigator.pushReplacement(
-                              context,
+                            navigator.pushReplacement(
                               MaterialPageRoute(
-                                builder: (context) => const ManagerScreen(),
+                                builder: (_) => const ManagerScreen(),
                               ),
                             );
                           } else {
-                            Navigator.pushReplacement(
-                              context,
+                            navigator.pushReplacement(
                               MaterialPageRoute(
-                                builder: (context) => const WaiterScreen(),
+                                builder: (_) => const WaiterScreen(),
                               ),
                             );
                           }
                         } else {
-                          // Si falla, mostramos el error que viene del Provider/API
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          // Si falla, mostramos el error que viene del Provider/API con duración controlada
+                          messenger.showSnackBar(
                             SnackBar(
                               content: Text(authProvider.errorMessage),
-                              backgroundColor: Colors.red,
+                              backgroundColor: Colors.redAccent,
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 4),
                             ),
                           );
                         }

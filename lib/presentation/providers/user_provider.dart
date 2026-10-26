@@ -49,4 +49,13 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Limpia los datos almacenados al cerrar sesión o cambiar de usuario
+  void clear() {
+    _users = [];
+    _errorMessage = '';
+    _isLoading = false;
+    notifyListeners();
+  }
 }
+

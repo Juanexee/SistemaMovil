@@ -60,6 +60,17 @@ class AuthProvider extends ChangeNotifier {
         }
       } catch (_) {}
 
+      final lowerMsg = msg.toLowerCase();
+      if (lowerMsg.contains('configuración de seguridad') ||
+          lowerMsg.contains('security') ||
+          lowerMsg.contains('cleartext') ||
+          lowerMsg.contains('handshake') ||
+          lowerMsg.contains('clientexception') ||
+          lowerMsg.contains('failed host lookup') ||
+          lowerMsg.contains('connection refused')) {
+        msg = 'Error de conexión con el servidor. Verifique su conexión a internet.';
+      }
+
       _errorMessage = msg;
       _isLoading = false;
       notifyListeners();

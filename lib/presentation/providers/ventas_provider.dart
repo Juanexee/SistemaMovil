@@ -29,8 +29,22 @@ class VentasProvider extends ChangeNotifier {
 
     try {
       _ventas = await _ventasService.getVentas();
+      _errorMessage = '';
     } catch (e) {
-      _errorMessage = 'Error al cargar las ventas: $e';
+      final errStr = e.toString();
+      if (errStr.contains('403')) {
+        // En caso de que el backend en Azure restrinja el listado de ventas exclusivamente a Administrador
+        if (_ventas.isNotEmpty) {
+          // Si ya hay datos en memoria, no mostramos un mensaje de error que opaque la vista
+          _errorMessage = '';
+        } else {
+          _errorMessage =
+              'Acceso restringido: El rol Gerente tiene permisos limitados en el servidor para consultar el registro detallado de facturas.';
+        }
+      } else {
+        _errorMessage =
+            'Error al cargar las ventas: ${errStr.replaceFirst('Exception: ', '')}';
+      }
     } finally {
       _isLoading = false;
       notifyListeners(); // Renderiza la información en la pantalla
@@ -57,8 +71,20 @@ class VentasProvider extends ChangeNotifier {
         metodoPago: metodoPago,
         estado: estado,
       );
+      _errorMessage = '';
     } catch (e) {
-      _errorMessage = 'Error al filtrar ventas: $e';
+      final errStr = e.toString();
+      if (errStr.contains('403')) {
+        if (_ventas.isNotEmpty) {
+          _errorMessage = '';
+        } else {
+          _errorMessage =
+              'Acceso restringido: El rol actual no tiene permisos en el servidor para filtrar facturas.';
+        }
+      } else {
+        _errorMessage =
+            'Error al filtrar ventas: ${errStr.replaceFirst('Exception: ', '')}';
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -72,7 +98,14 @@ class VentasProvider extends ChangeNotifier {
       await loadVentas(); // Recargamos las ventas para mostrar la nueva
       return true;
     } catch (e) {
-      _errorMessage = 'Error al registrar venta: $e';
+      final errStr = e.toString();
+      if (errStr.contains('403')) {
+        _errorMessage =
+            'No tiene permisos para registrar ventas con el rol actual.';
+      } else {
+        _errorMessage =
+            'Error al registrar venta: ${errStr.replaceFirst('Exception: ', '')}';
+      }
       notifyListeners();
       return false;
     }
@@ -84,8 +117,23 @@ class VentasProvider extends ChangeNotifier {
       await _ventasService.cobrar(id);
       await loadVentas(); // Actualiza la lista
     } catch (e) {
-      _errorMessage = 'Error al cobrar la venta: $e';
+      final errStr = e.toString();
+      if (errStr.contains('403')) {
+        _errorMessage =
+            'No tiene permisos para cobrar ventas con el rol actual.';
+      } else {
+        _errorMessage =
+            'Error al cobrar la venta: ${errStr.replaceFirst('Exception: ', '')}';
+      }
       notifyListeners();
     }
+  }
+
+  // Limpia los datos almacenados al cerrar sesión o cambiar de usuario
+  void clear() {
+    _ventas = [];
+    _errorMessage = '';
+    _isLoading = false;
+    notifyListeners();
   }
 }

@@ -23,15 +23,29 @@ class PlatilloModel {
   });
 
   factory PlatilloModel.fromJson(Map<String, dynamic> json) {
+    final rawImg = json['imagenBase64'] ??
+        json['imagenUrl'] ??
+        json['imagen'] ??
+        json['foto'] ??
+        json['fotoUrl'] ??
+        json['urlImagen'] ??
+        json['rutaImagen'] ??
+        json['imageUrl'] ??
+        json['image'] ??
+        json['imagenPath'] ??
+        json['archivoImagen'];
+
     return PlatilloModel(
-      id:              json['platilloID']      ?? json['id']              ?? 0,
-      nombre:          json['nombre']          ?? '',
+      id:              json['platilloID']      ?? json['id']              ?? json['idPlatillo'] ?? 0,
+      nombre:          json['nombre']          ?? json['nombrePlatillo']  ?? '',
       descripcion:     json['descripcion']     ?? '',
       precio:          (json['precio']         ?? 0).toDouble(),
-      categoriaId:     json['categoriaID']     ?? json['categoriaId']     ?? 0,
-      categoriaNombre: json['nombreCategoria'] ?? json['categoriaNombre'],
-      disponible:      json['disponible']      ?? true,
-      imagenUrl:       json['imagenBase64']    ?? json['imagenUrl'],
+      categoriaId:     json['categoriaID']     ?? json['categoriaId']     ?? json['idCategoria'] ?? 0,
+      categoriaNombre: json['nombreCategoria'] ?? json['categoriaNombre'] ?? json['categoria'],
+      disponible:      json['disponible']      ?? json['activo']          ?? true,
+      imagenUrl:       rawImg != null && rawImg.toString().trim().isNotEmpty
+          ? rawImg.toString().trim()
+          : null,
     );
   }
 

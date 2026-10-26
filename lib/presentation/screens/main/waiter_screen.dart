@@ -6,7 +6,7 @@ import '../order/order_card_screen.dart';
 import '../login/login_screen.dart';
 
 class WaiterScreen extends StatefulWidget {
-  const WaiterScreen({Key? key}) : super(key: key);
+  const WaiterScreen({super.key});
 
   @override
   State<WaiterScreen> createState() => _WaiterScreenState();
@@ -22,10 +22,10 @@ class _WaiterScreenState extends State<WaiterScreen> {
     final List<Widget> screens = [
       TableManagementScreen(
         onTableTap: (mesa) {
-          // Recibimos la mesa seleccionada y navegamos a la pantalla de Comanda
+          // Recibimos la mesa seleccionada y navegamos a la pantalla de Comanda con esa mesa específica
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const OrderCartScreen()),
+            MaterialPageRoute(builder: (context) => OrderCartScreen(mesa: mesa)),
           );
         },
       ),

@@ -196,6 +196,6 @@ void setupDependencies() {
   );
 
   sl.registerFactory<InventarioProvider>(
-    () => InventarioProvider(sl<InventarioService>()),
+    () => InventarioProvider(sl<InventarioService>(), sl<InsumosService>()),
   );
 }
