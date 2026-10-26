@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../presentation/providers/user_provider.dart';
 import '../../../data/models/users_model.dart';
+import '../../widgets/pagination_controls.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -14,6 +15,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
   String _filterRole = 'Todos';
+  int _currentPage = 1;
+  static const int _itemsPerPage = 10;
 
   @override
   void initState() {
@@ -23,7 +26,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       Provider.of<UserProvider>(context, listen: false).loadUsers();
     });
     _searchCtrl.addListener(() {
-      setState(() => _searchQuery = _searchCtrl.text.toLowerCase());
+      setState(() {
+        _searchQuery = _searchCtrl.text.toLowerCase();
+        _currentPage = 1;
+      });
     });
   }
 
@@ -332,27 +338,52 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                           ),
 
                         // Tarjetas de usuario
-                        if (!provider.isLoading)
-                          ...filtered.map((u) => _buildUserCard(
-                                initials: _initials(u.name),
-                                name: u.name,
-                                email: u.email,
-                                role: u.role.isNotEmpty ? u.role : 'Sin rol',
-                                tagColor: _tagColor(u.role),
-                                tagTextColor: _tagTextColor(u.role),
-                                sideAccentColor: _sideAccentColor(u.role),
-                              )),
-
-                        if (!provider.isLoading && filtered.isEmpty)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(30.0),
-                              child: Text(
-                                'No se encontraron usuarios',
-                                style: TextStyle(color: Colors.grey[500]),
+                        if (!provider.isLoading) ...[
+                          if (filtered.isEmpty)
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(30.0),
+                                child: Text(
+                                  'No se encontraron usuarios',
+                                  style: TextStyle(color: Colors.grey[500]),
+                                ),
                               ),
+                            )
+                          else
+                            Builder(
+                              builder: (context) {
+                                final totalPages = (filtered.length / _itemsPerPage).ceil();
+                                final safePage = _currentPage.clamp(1, totalPages > 0 ? totalPages : 1);
+                                final startIndex = (safePage - 1) * _itemsPerPage;
+                                final endIndex = (startIndex + _itemsPerPage).clamp(0, filtered.length);
+                                final pagedItems = filtered.sublist(startIndex, endIndex);
+
+                                return Column(
+                                  children: [
+                                    ...pagedItems.map((u) => _buildUserCard(
+                                          initials: _initials(u.name),
+                                          name: u.name,
+                                          email: u.email,
+                                          role: u.role.isNotEmpty ? u.role : 'Sin rol',
+                                          tagColor: _tagColor(u.role),
+                                          tagTextColor: _tagTextColor(u.role),
+                                          sideAccentColor: _sideAccentColor(u.role),
+                                        )),
+                                    if (totalPages > 1)
+                                      PaginationControls(
+                                        currentPage: safePage,
+                                        totalPages: totalPages,
+                                        totalItems: filtered.length,
+                                        itemsPerPage: _itemsPerPage,
+                                        onPageChanged: (newPage) {
+                                          setState(() => _currentPage = newPage);
+                                        },
+                                      ),
+                                  ],
+                                );
+                              },
                             ),
-                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -604,7 +635,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Widget _buildFilterChip(String label, {IconData? icon}) {
     final isSelected = _filterRole == label;
     return GestureDetector(
-      onTap: () => setState(() => _filterRole = label),
+      onTap: () => setState(() {
+        _filterRole = label;
+        _currentPage = 1;
+      }),
       child: Container(
         padding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

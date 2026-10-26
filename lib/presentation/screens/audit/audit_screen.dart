@@ -4,6 +4,7 @@ import '../../../services/auditoria_service.dart';
 import '../../../services/dashboard_service.dart';
 import '../../../data/models/auditoria_model.dart';
 import '../../../data/models/dashboard_model.dart';
+import '../../widgets/pagination_controls.dart';
 
 class AuditLogsScreen extends StatefulWidget {
   const AuditLogsScreen({super.key});
@@ -15,6 +16,9 @@ class AuditLogsScreen extends StatefulWidget {
 class _AuditLogsScreenState extends State<AuditLogsScreen> {
   // Controlador para el buscador
   TextEditingController search_ctrl = TextEditingController();
+  String _searchQuery = '';
+  int _currentPage = 1;
+  static const int _itemsPerPage = 15;
 
   bool _isLoading = false;
   List<LogAuditoriaModel> _logs = [];
@@ -23,7 +27,29 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
   @override
   void initState() {
     super.initState();
+    search_ctrl.addListener(() {
+      setState(() {
+        _searchQuery = search_ctrl.text.toLowerCase().trim();
+        _currentPage = 1;
+      });
+    });
     _cargarDatos();
+  }
+
+  @override
+  void dispose() {
+    search_ctrl.dispose();
+    super.dispose();
+  }
+
+  List<LogAuditoriaModel> get _filteredLogs {
+    if (_searchQuery.isEmpty) return _logs;
+    return _logs.where((l) {
+      return l.descripcion.toLowerCase().contains(_searchQuery) ||
+          l.tipoEvento.toLowerCase().contains(_searchQuery) ||
+          l.usuarioResponsable.toLowerCase().contains(_searchQuery) ||
+          l.modulo.toLowerCase().contains(_searchQuery);
+    }).toList();
   }
 
   Future<void> _cargarDatos() async {
@@ -352,7 +378,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                       child: CircularProgressIndicator(),
                     ),
                   )
-                else if (_logs.isEmpty)
+                else if (_filteredLogs.isEmpty)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
@@ -366,40 +392,66 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                         Icon(Icons.inbox_outlined, size: 40, color: Colors.grey[400]),
                         const SizedBox(height: 10),
                         Text(
-                          'No hay eventos de auditoría registrados',
+                          _searchQuery.isNotEmpty
+                              ? 'No se encontraron eventos con "$_searchQuery"'
+                              : 'No hay eventos de auditoría registrados',
                           style: TextStyle(color: Colors.grey[600], fontSize: 14),
                         ),
                       ],
                     ),
                   )
-                else
-                  Column(
-                    children: _logs.map((log) {
-                      final isWarn = log.tipoEvento.toUpperCase() == 'ANULACION' ||
-                          log.tipoEvento.toUpperCase() == 'ERROR';
-                      final initial = log.usuarioResponsable.isNotEmpty
-                          ? log.usuarioResponsable.substring(0, 1).toUpperCase()
-                          : 'S';
-                      return _buildLogItem(
-                        icon: isWarn
-                            ? Icons.warning_amber_rounded
-                            : Icons.check_circle_outline,
-                        iconColor: isWarn ? Colors.red[400]! : Colors.green[400]!,
-                        title: log.descripcion.isNotEmpty
-                            ? log.descripcion
-                            : 'Evento: ${log.tipoEvento}',
-                        subtitle: '${log.modulo} • ${log.fecha}',
-                        userInitials: initial,
-                        userName: log.usuarioResponsable.isNotEmpty
-                            ? log.usuarioResponsable
-                            : 'Sistema',
-                        time: log.fecha.length > 10
-                            ? log.fecha.substring(0, 10)
-                            : log.fecha,
-                        isAlert: isWarn,
+                else ...[
+                  Builder(
+                    builder: (context) {
+                      final logs = _filteredLogs;
+                      final totalPages = (logs.length / _itemsPerPage).ceil();
+                      final safePage = _currentPage.clamp(1, totalPages > 0 ? totalPages : 1);
+                      final startIndex = (safePage - 1) * _itemsPerPage;
+                      final endIndex = (startIndex + _itemsPerPage).clamp(0, logs.length);
+                      final pagedItems = logs.sublist(startIndex, endIndex);
+
+                      return Column(
+                        children: [
+                          ...pagedItems.map((log) {
+                            final isWarn = log.tipoEvento.toUpperCase() == 'ANULACION' ||
+                                log.tipoEvento.toUpperCase() == 'ERROR';
+                            final initial = log.usuarioResponsable.isNotEmpty
+                                ? log.usuarioResponsable.substring(0, 1).toUpperCase()
+                                : 'S';
+                            return _buildLogItem(
+                              icon: isWarn
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.check_circle_outline,
+                              iconColor: isWarn ? Colors.red[400]! : Colors.green[400]!,
+                              title: log.descripcion.isNotEmpty
+                                  ? log.descripcion
+                                  : 'Evento: ${log.tipoEvento}',
+                              subtitle: '${log.modulo} • ${log.fecha}',
+                              userInitials: initial,
+                              userName: log.usuarioResponsable.isNotEmpty
+                                  ? log.usuarioResponsable
+                                  : 'Sistema',
+                              time: log.fecha.length > 10
+                                  ? log.fecha.substring(0, 10)
+                                  : log.fecha,
+                              isAlert: isWarn,
+                            );
+                          }),
+                          if (totalPages > 1)
+                            PaginationControls(
+                              currentPage: safePage,
+                              totalPages: totalPages,
+                              totalItems: logs.length,
+                              itemsPerPage: _itemsPerPage,
+                              onPageChanged: (newPage) {
+                                setState(() => _currentPage = newPage);
+                              },
+                            ),
+                        ],
                       );
-                    }).toList(),
+                    },
                   ),
+                ],
 
                 const SizedBox(height: 20),
               ],

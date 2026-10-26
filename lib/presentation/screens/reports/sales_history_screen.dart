@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../presentation/providers/ventas_provider.dart';
 import '../../../data/models/ventas_model.dart';
+import '../../widgets/pagination_controls.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
   const SalesHistoryScreen({super.key});
@@ -13,6 +14,8 @@ class SalesHistoryScreen extends StatefulWidget {
 class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   TextEditingController search_ctrl = TextEditingController();
   String _searchQuery = '';
+  int _currentPage = 1;
+  static const int _itemsPerPage = 15;
 
   @override
   void initState() {
@@ -22,7 +25,10 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       Provider.of<VentasProvider>(context, listen: false).loadVentas();
     });
     search_ctrl.addListener(() {
-      setState(() => _searchQuery = search_ctrl.text.toLowerCase());
+      setState(() {
+        _searchQuery = search_ctrl.text.toLowerCase();
+        _currentPage = 1;
+      });
     });
   }
 
@@ -417,12 +423,33 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                             ),
                           ),
                         )
-                      else
-                        Column(
-                          children: filtered
-                              .map((v) => _buildInvoiceRow(v))
-                              .toList(),
+                      else ...[
+                        Builder(
+                          builder: (context) {
+                            final totalPages = (filtered.length / _itemsPerPage).ceil();
+                            final safePage = _currentPage.clamp(1, totalPages > 0 ? totalPages : 1);
+                            final startIndex = (safePage - 1) * _itemsPerPage;
+                            final endIndex = (startIndex + _itemsPerPage).clamp(0, filtered.length);
+                            final pagedItems = filtered.sublist(startIndex, endIndex);
+
+                            return Column(
+                              children: [
+                                ...pagedItems.map((v) => _buildInvoiceRow(v)),
+                                if (totalPages > 1)
+                                  PaginationControls(
+                                    currentPage: safePage,
+                                    totalPages: totalPages,
+                                    totalItems: filtered.length,
+                                    itemsPerPage: _itemsPerPage,
+                                    onPageChanged: (newPage) {
+                                      setState(() => _currentPage = newPage);
+                                    },
+                                  ),
+                              ],
+                            );
+                          },
                         ),
+                      ],
                     ],
 
                     const SizedBox(height: 20),
