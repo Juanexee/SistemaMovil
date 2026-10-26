@@ -40,13 +40,19 @@ class UserProvider extends ChangeNotifier {
   }
 
   // Método para crear un usuario y refrescar la lista
-  Future<void> addUser(UserModel nuevoUsuario) async {
+  Future<bool> addUser(UserModel nuevoUsuario) async {
+    _isLoading = true;
+    _errorMessage = '';
+    notifyListeners();
     try {
       await _userService.crear(nuevoUsuario);
       await loadUsers(); // Recarga la lista para mostrar el nuevo usuario
+      return true;
     } catch (e) {
-      _errorMessage = 'Error al crear usuario: $e';
+      _errorMessage = 'Error al crear usuario: ${e.toString().replaceFirst("Exception: ", "")}';
+      _isLoading = false;
       notifyListeners();
+      return false;
     }
   }
 

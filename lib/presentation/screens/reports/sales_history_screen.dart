@@ -552,10 +552,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
   Color _estadoColor(String estado) {
     final e = estado.toLowerCase();
-    if (e.contains('pagad') || e.contains('cobrad') || e.contains('completad'))
+    if (e.contains('pagad') || e.contains('cobrad') || e.contains('completad')) {
       return Colors.green;
-    if (e.contains('pendiente') || e.contains('activ'))
+    }
+    if (e.contains('pendiente') || e.contains('activ')) {
       return Colors.orange;
+    }
     if (e.contains('cancel')) return Colors.red;
     return Colors.grey;
   }

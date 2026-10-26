@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/di/injection.dart';
 import '../../../services/mesas_service.dart';
+import '../../../services/sesion_service.dart';
 import '../order/order_card_screen.dart';
 
 class TableManagementScreen extends StatefulWidget {
@@ -27,7 +28,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
     setState(() => _isLoading = true);
     try {
       final lista = await sl<MesasService>().getMesas();
-      if (lista.isNotEmpty && mounted) {
+      if (mounted) {
         setState(() {
           _tables.clear();
           for (final m in lista) {
@@ -51,8 +52,6 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
           }
           _isLoading = false;
         });
-      } else if (mounted) {
-        setState(() => _isLoading = false);
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
@@ -830,15 +829,29 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                   ),
                   elevation: 0,
                 ),
-                onPressed: () {
-                  Navigator.pop(context); // Cierra el modal de detalle
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  navigator.pop(); // Cierra el modal de detalle
+
+                  final mesaId = table['id'] is int
+                      ? table['id'] as int
+                      : (int.tryParse(table['id']?.toString() ?? '') ?? 0);
+
+                  // Si la mesa está libre, solicitamos al servidor abrir sesión
+                  if (status == 'Libre' && mesaId > 0) {
+                    try {
+                      await sl<SesionService>().abrirSesion(mesaId);
+                    } catch (_) {
+                      // Si la sesión ya estaba abierta o el endpoint no lo requiere, continuamos a la orden
+                    }
+                  }
+
                   if (widget.onTableTap != null) {
                     // Si el padre tiene un handler personalizado, lo ejecutamos pasándole esta mesa
                     widget.onTableTap!(table);
                   } else {
                     // Por defecto, navegamos a la pantalla de la comanda de ESA mesa
-                    Navigator.push(
-                      context,
+                    navigator.push(
                       MaterialPageRoute(
                         builder: (context) => OrderCartScreen(mesa: table),
                       ),

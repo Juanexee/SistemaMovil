@@ -51,8 +51,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final r = role.toLowerCase();
     if (r.contains('gerente')) return const Color(0xFFF7EBE1);
     if (r.contains('admin')) return const Color(0xFFEFEFEF);
-    if (r.contains('mesero') || r.contains('salón') || r.contains('salon'))
+    if (r.contains('mesero') || r.contains('salón') || r.contains('salon')) {
       return const Color(0xFFEBF5EE);
+    }
     return const Color(0xFFEFEFEF);
   }
 
@@ -60,8 +61,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final r = role.toLowerCase();
     if (r.contains('gerente')) return const Color(0xFFB57049);
     if (r.contains('admin')) return const Color(0xFF666666);
-    if (r.contains('mesero') || r.contains('salón') || r.contains('salon'))
+    if (r.contains('mesero') || r.contains('salón') || r.contains('salon')) {
       return const Color(0xFF427A59);
+    }
     return const Color(0xFF666666);
   }
 
@@ -69,8 +71,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final r = role.toLowerCase();
     if (r.contains('gerente')) return const Color(0xFFDCA887);
     if (r.contains('admin')) return const Color(0xFFCCCCCC);
-    if (r.contains('mesero') || r.contains('salón') || r.contains('salon'))
+    if (r.contains('mesero') || r.contains('salón') || r.contains('salon')) {
       return const Color(0xFFA2C7B3);
+    }
     return const Color(0xFFCCCCCC);
   }
 
@@ -362,55 +365,203 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
   }
 
-  // Diálogo simple para agregar usuario (esqueleto)
+  // Diálogo para agregar usuario con los campos requeridos por el backend
   void _showAddUserDialog(BuildContext ctx, UserProvider provider) {
+    final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-    final roleCtrl = TextEditingController();
+    final userCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+    int selectedRolId = 2; // Por defecto Mesero
+    String selectedRolNombre = 'Mesero';
+    bool obscurePass = true;
+    bool isSaving = false;
+
+    // Roles estándar del sistema
+    final rolesDisponibles = [
+      {'id': 1, 'nombre': 'Administrador'},
+      {'id': 2, 'nombre': 'Mesero'},
+      {'id': 3, 'nombre': 'Gerente'},
+      {'id': 4, 'nombre': 'Cajero'},
+    ];
+
     showDialog(
       context: ctx,
-      builder: (_) => AlertDialog(
-        title: const Text('Nuevo Usuario'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Nombre'),
+      barrierDismissible: false,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: const [
+                Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF322018)),
+                SizedBox(width: 8),
+                Text(
+                  'Nuevo Usuario',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ],
             ),
-            TextField(
-              controller: emailCtrl,
-              decoration: const InputDecoration(labelText: 'Usuario / Email'),
+            content: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ingresa los datos para dar de alta al personal en el sistema:',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Nombre Completo
+                    TextFormField(
+                      controller: nameCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Nombre Completo',
+                        hintText: 'Ej. Juan Pérez',
+                        prefixIcon: const Icon(Icons.badge_outlined, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa el nombre' : null,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Nombre de Usuario / Login
+                    TextFormField(
+                      controller: userCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Nombre de Usuario',
+                        hintText: 'Ej. jperez',
+                        prefixIcon: const Icon(Icons.alternate_email_rounded, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa el usuario de login' : null,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Contraseña
+                    TextFormField(
+                      controller: passCtrl,
+                      obscureText: obscurePass,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña',
+                        hintText: 'Mínimo 4 caracteres',
+                        prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscurePass ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            size: 20,
+                          ),
+                          onPressed: () => setDialogState(() => obscurePass = !obscurePass),
+                        ),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
+                      validator: (v) => (v == null || v.trim().length < 3) ? 'Ingresa una contraseña válida' : null,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Selector de Rol
+                    DropdownButtonFormField<int>(
+                      initialValue: selectedRolId,
+                      decoration: InputDecoration(
+                        labelText: 'Rol en el sistema',
+                        prefixIcon: const Icon(Icons.admin_panel_settings_outlined, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
+                      items: rolesDisponibles.map((r) {
+                        return DropdownMenuItem<int>(
+                          value: r['id'] as int,
+                          child: Text(r['nombre'] as String),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() {
+                            selectedRolId = val;
+                            selectedRolNombre = rolesDisponibles.firstWhere((r) => r['id'] == val)['nombre'] as String;
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
-            TextField(
-              controller: roleCtrl,
-              decoration: const InputDecoration(labelText: 'Rol'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF322018)),
-            onPressed: () {
-              if (nameCtrl.text.isNotEmpty) {
-                provider.addUser(UserModel(
-                  id: 0,
-                  name: nameCtrl.text.trim(),
-                  email: emailCtrl.text.trim(),
-                  role: roleCtrl.text.trim(),
-                ));
-                Navigator.pop(ctx);
-              }
-            },
-            child: const Text('Guardar',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.pop(dialogCtx),
+                child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF322018),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        if (!formKey.currentState!.validate()) return;
+                        setDialogState(() => isSaving = true);
+
+                        final messenger = ScaffoldMessenger.of(ctx);
+                        final exito = await provider.addUser(
+                          UserModel(
+                            id: 0,
+                            name: nameCtrl.text.trim(),
+                            email: userCtrl.text.trim(),
+                            role: selectedRolNombre,
+                            rolId: selectedRolId,
+                            password: passCtrl.text.trim(),
+                          ),
+                        );
+
+                        if (dialogCtx.mounted) {
+                          Navigator.pop(dialogCtx);
+                        }
+
+                        messenger.clearSnackBars();
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(
+                                  exito ? Icons.check_circle : Icons.error_outline,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    exito
+                                        ? 'Usuario ${userCtrl.text.trim()} creado exitosamente'
+                                        : (provider.errorMessage.isNotEmpty
+                                            ? provider.errorMessage
+                                            : 'Error al registrar el usuario en la API'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: exito ? const Color(0xFF322018) : Colors.redAccent,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                child: isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Guardar', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -450,8 +601,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label,
-      {IconData? icon, bool hasDropdown = false}) {
+  Widget _buildFilterChip(String label, {IconData? icon}) {
     final isSelected = _filterRole == label;
     return GestureDetector(
       onTap: () => setState(() => _filterRole = label),

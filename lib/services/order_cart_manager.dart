@@ -5,29 +5,7 @@ class OrderCartManager extends ChangeNotifier {
   factory OrderCartManager() => _instance;
   OrderCartManager._internal();
 
-  final List<Map<String, dynamic>> _items = [
-    {
-      'id': 1,
-      'title': 'Carne Asada Especial',
-      'note': 'Sin cebolla, término medio',
-      'pricePerUnit': 240.0,
-      'quantity': 1,
-    },
-    {
-      'id': 2,
-      'title': 'Vigorón Tradicional',
-      'note': 'Con ensalada fresca',
-      'pricePerUnit': 180.0,
-      'quantity': 1,
-    },
-    {
-      'id': 3,
-      'title': 'Pollo a la Plancha',
-      'note': 'Con vegetales',
-      'pricePerUnit': 195.0,
-      'quantity': 1,
-    },
-  ];
+  final List<Map<String, dynamic>> _items = [];
 
   List<Map<String, dynamic>> get items => _items;
 

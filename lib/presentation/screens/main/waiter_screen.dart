@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 
 import '../table/table_screen.dart';
 import '../menu/menu_catalog_screen.dart';
@@ -49,10 +51,13 @@ class _WaiterScreenState extends State<WaiterScreen> {
             _buildNavItem(Icons.menu_book, 'Catálogo', 1),
             // Botón de cerrar sesión
             InkWell(
-              onTap: () {
-                Navigator.pushReplacement(
+              onTap: () async {
+                await Provider.of<AuthProvider>(context, listen: false).logout();
+                if (!context.mounted) return;
+                Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
                 );
               },
               borderRadius: BorderRadius.circular(10),

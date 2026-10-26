@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../services/order_cart_manager.dart';
+import '../../providers/ventas_provider.dart';
+import '../../../data/models/ventas_model.dart';
 
 class OrderCartScreen extends StatefulWidget {
   final Map<String, dynamic>? mesa;
@@ -11,6 +14,7 @@ class OrderCartScreen extends StatefulWidget {
 
 class _OrderCartScreenState extends State<OrderCartScreen> {
   final _cartManager = OrderCartManager();
+  bool _isSubmitting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -492,6 +496,9 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
   // 6. Botón principal de acción inferior
   Widget _buildSubmitButton(List<Map<String, dynamic>> items) {
     final mesaName = widget.mesa?['name'] ?? 'Mesa 01';
+    final mesaId = widget.mesa?['id'] is int
+        ? widget.mesa!['id'] as int
+        : (int.tryParse(widget.mesa?['id']?.toString() ?? '') ?? 1);
     final hasItems = items.isNotEmpty;
 
     return SizedBox(
@@ -500,61 +507,123 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor:
-              hasItems ? const Color(0xFF2E221E) : Colors.grey.shade400,
+              (hasItems && !_isSubmitting) ? const Color(0xFF2E221E) : Colors.grey.shade400,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
           ),
           elevation: 0,
         ),
-        onPressed: hasItems
-            ? () {
-                showDialog(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    title: Row(
-                      children: const [
-                        Icon(Icons.check_circle_outline,
-                            color: Colors.green, size: 28),
-                        SizedBox(width: 8),
-                        Text('Comanda enviada'),
+        onPressed: (hasItems && !_isSubmitting)
+            ? () async {
+                setState(() => _isSubmitting = true);
+
+                final ventasProvider = Provider.of<VentasProvider>(context, listen: false);
+
+                // Construimos los detalles a partir de los ítems del carrito
+                final detalles = items.map((item) {
+                  final platilloId = item['id'] is int
+                      ? item['id'] as int
+                      : (int.tryParse(item['id']?.toString() ?? '') ?? 1);
+                  final cantidad = (item['quantity'] as int?) ?? 1;
+                  final precioUnitario = (item['pricePerUnit'] as num?)?.toDouble() ?? 0.0;
+
+                  return DetalleVentaRequest(
+                    platilloId: platilloId,
+                    cantidad: cantidad,
+                    precioUnitario: precioUnitario,
+                  );
+                }).toList();
+
+                final request = RegistrarVentaRequest(
+                  mesaId: mesaId,
+                  detalles: detalles,
+                );
+
+                final exito = await ventasProvider.registrarVenta(request);
+
+                if (!mounted) return;
+                setState(() => _isSubmitting = false);
+
+                if (exito) {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (ctx) => AlertDialog(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      title: Row(
+                        children: const [
+                          Icon(Icons.check_circle_outline,
+                              color: Colors.green, size: 28),
+                          SizedBox(width: 8),
+                          Text('Comanda enviada'),
+                        ],
+                      ),
+                      content: Text(
+                          'La comanda para $mesaName ha sido registrada y enviada a cocina con éxito.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _cartManager.clear();
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Aceptar',
+                              style: TextStyle(
+                                  color: Color(0xFF38231C),
+                                  fontWeight: FontWeight.bold)),
+                        ),
                       ],
                     ),
-                    content: Text(
-                        'La comanda para $mesaName ha sido enviada a cocina con éxito.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          _cartManager.clear();
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Aceptar',
-                            style: TextStyle(
-                                color: Color(0xFF38231C),
-                                fontWeight: FontWeight.bold)),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              ventasProvider.errorMessage.isNotEmpty
+                                  ? ventasProvider.errorMessage
+                                  : 'No se pudo registrar la comanda en el servidor',
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
+                      backgroundColor: Colors.redAccent,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
               }
             : null,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.send_rounded, color: Colors.white, size: 18),
-            SizedBox(width: 8),
-            Text(
-              'Enviar comanda a cocina',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Enviar comanda a cocina',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -1,17 +1,85 @@
 import 'package:flutter/material.dart';
- 
+import '../../../core/di/injection.dart';
+import '../../../services/secure_storage_service.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
- 
+
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
- 
+
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Variables para que los controles funcionen en la UI
-  double val_slider = 10.0;
-  bool push_noti = false;
-  bool system_alerts = true;
+  // Variables de configuración persistidas
+  double valSlider = 10.0;
+  bool pushNoti = false;
+  bool systemAlerts = true;
+  bool _isLoading = true;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarPreferencias();
+  }
+
+  Future<void> _cargarPreferencias() async {
+    try {
+      final storage = sl<SecureStorageService>();
+      final prefs = await storage.getSettings();
+      if (mounted) {
+        setState(() {
+          valSlider = (prefs['stockMinimo'] as num?)?.toDouble() ?? 10.0;
+          pushNoti = prefs['pushNoti'] as bool? ?? false;
+          systemAlerts = prefs['systemAlerts'] as bool? ?? true;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _guardarPreferencias() async {
+    setState(() => _isSaving = true);
+    try {
+      final storage = sl<SecureStorageService>();
+      await storage.saveSettings(
+        stockMinimo: valSlider,
+        pushNoti: pushNoti,
+        systemAlerts: systemAlerts,
+      );
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.greenAccent, size: 20),
+                SizedBox(width: 8),
+                Text('Preferencias guardadas exitosamente'),
+              ],
+            ),
+            backgroundColor: Color(0xFF2E221E),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al guardar preferencias'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
  
   @override
   Widget build(BuildContext context) {
@@ -20,10 +88,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
  
  
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // TOP BAR
@@ -181,7 +251,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              '${val_slider.toInt()} unidades',
+                              '${valSlider.toInt()} unidades',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
@@ -200,12 +270,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           trackHeight: 6.0,
                         ),
                         child: Slider(
-                          value: val_slider,
+                          value: valSlider,
                           min: 1,
                           max: 30,
                           onChanged: (value) {
                             setState(() {
-                              val_slider = value;
+                              valSlider = value;
                             });
                           },
                         ),
@@ -292,8 +362,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Column(
                       children: [
                         SwitchListTile(
-                          value: push_noti,
-                          activeColor: const Color(0xFF8A6D5C),
+                          value: pushNoti,
+                          activeTrackColor: const Color(0xFF8A6D5C),
                           title: const Text(
                             'Notificaciones Push',
                             style: TextStyle(
@@ -322,14 +392,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           onChanged: (bool value) {
                             setState(() {
-                              push_noti = value;
+                              pushNoti = value;
                             });
                           },
                         ),
                         const Divider(height: 1),
                         SwitchListTile(
-                          value: system_alerts,
-                          activeColor: const Color(0xFF8A6D5C),
+                          value: systemAlerts,
+                          activeTrackColor: const Color(0xFF8A6D5C),
                           title: const Text(
                             'Alertas del sistema',
                             style: TextStyle(
@@ -358,7 +428,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           onChanged: (bool value) {
                             setState(() {
-                              system_alerts = value;
+                              systemAlerts = value;
                             });
                           },
                         ),
@@ -420,28 +490,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {
-                      // print("Guardando...");
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(
-                          Icons.save_outlined,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Guardar preferencias',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
+                    onPressed: _isSaving ? null : _guardarPreferencias,
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(
+                                Icons.save_outlined,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Guardar preferencias',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
  

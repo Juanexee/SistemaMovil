@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 
 import '../inventory/invenroty_screen.dart';
 import '../reports/sales_history_screen.dart';
@@ -47,10 +49,13 @@ class _ManagerScreenState extends State<ManagerScreen> {
             _buildNavItem(Icons.settings, 'Ajustes', 4),
             // Botón de cerrar sesión
             InkWell(
-              onTap: () {
-                Navigator.pushReplacement(
+              onTap: () async {
+                await Provider.of<AuthProvider>(context, listen: false).logout();
+                if (!context.mounted) return;
+                Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
                 );
               },
               borderRadius: BorderRadius.circular(10),

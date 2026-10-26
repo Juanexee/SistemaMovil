@@ -575,22 +575,4 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
       ),
     );
   }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: isActive ? Colors.white : Colors.grey[500], size: 24),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive ? Colors.white : Colors.grey[500],
-            fontSize: 10,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
 }
