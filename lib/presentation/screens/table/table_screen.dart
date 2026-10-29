@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/di/injection.dart';
 import '../../../services/mesas_service.dart';
 import '../../../services/sesion_service.dart';
+import '../../../services/auth_service.dart';
+import '../../../data/models/mesas_model.dart';
 import '../order/order_card_screen.dart';
 
 class TableManagementScreen extends StatefulWidget {
@@ -28,6 +30,20 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
     setState(() => _isLoading = true);
     try {
       final lista = await sl<MesasService>().getMesas();
+      String meseroActual = 'El Rancho La Mimi';
+      String meseroIniciales = 'MR';
+
+      try {
+        final authUser = await sl<AuthService>().getUserName();
+        if (authUser != null && authUser.trim().isNotEmpty) {
+          meseroActual = authUser.trim();
+          final partes = meseroActual.split(' ');
+          meseroIniciales = partes.length >= 2
+              ? '${partes[0][0]}${partes[1][0]}'.toUpperCase()
+              : meseroActual.substring(0, meseroActual.length.clamp(0, 2)).toUpperCase();
+        }
+      } catch (_) {}
+
       if (mounted) {
         setState(() {
           _tables.clear();
@@ -45,8 +61,8 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
               'status': status,
               'capacidad': m.capacidad,
               'detail': 'Capacidad: ${m.capacidad} personas',
-              'waiterInitials': 'MR',
-              'waiterName': 'El Rancho La Mimi',
+              'waiterInitials': meseroIniciales,
+              'waiterName': meseroActual,
               'type': status,
             });
           }
@@ -841,16 +857,12 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                   if (status == 'Libre' && mesaId > 0) {
                     try {
                       await sl<SesionService>().abrirSesion(mesaId);
-                    } catch (_) {
-                      // Si la sesión ya estaba abierta o el endpoint no lo requiere, continuamos a la orden
-                    }
+                    } catch (_) {}
                   }
 
                   if (widget.onTableTap != null) {
-                    // Si el padre tiene un handler personalizado, lo ejecutamos pasándole esta mesa
                     widget.onTableTap!(table);
                   } else {
-                    // Por defecto, navegamos a la pantalla de la comanda de ESA mesa
                     navigator.push(
                       MaterialPageRoute(
                         builder: (context) => OrderCartScreen(mesa: table),
@@ -876,6 +888,88 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                 ),
               ),
             ),
+
+            // Acciones de cambio de estado de la mesa (Liberar / Por cobrar)
+            if (status != 'Libre') ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  if (status == 'Ocupada')
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.blue.shade700,
+                          side: BorderSide(color: Colors.blue.shade300),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        icon: const Icon(Icons.payments_outlined, size: 16),
+                        label: const Text('Por cobrar', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          final mesaId = table['id'] is int
+                              ? table['id'] as int
+                              : (int.tryParse(table['id']?.toString() ?? '') ?? 0);
+                          final numMesa = table['numero'] is int
+                              ? table['numero'] as int
+                              : (int.tryParse(table['numero']?.toString() ?? '') ?? 1);
+                          final cap = table['capacidad'] is int
+                              ? table['capacidad'] as int
+                              : (int.tryParse(table['capacidad']?.toString() ?? '') ?? 4);
+
+                          try {
+                            await sl<MesasService>().actualizar(
+                              mesaId,
+                              MesaModel(id: mesaId, numero: numMesa, capacidad: cap, estado: 'Por cobrar'),
+                            );
+                          } catch (_) {}
+                          setState(() {
+                            table['status'] = 'Por cobrar';
+                            table['type'] = 'Por cobrar';
+                          });
+                        },
+                      ),
+                    ),
+                  if (status == 'Ocupada') const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.green.shade700,
+                        side: BorderSide(color: Colors.green.shade300),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      icon: const Icon(Icons.check_circle_outline, size: 16),
+                      label: const Text('Liberar mesa', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        final mesaId = table['id'] is int
+                            ? table['id'] as int
+                            : (int.tryParse(table['id']?.toString() ?? '') ?? 0);
+                        final numMesa = table['numero'] is int
+                            ? table['numero'] as int
+                            : (int.tryParse(table['numero']?.toString() ?? '') ?? 1);
+                        final cap = table['capacidad'] is int
+                            ? table['capacidad'] as int
+                            : (int.tryParse(table['capacidad']?.toString() ?? '') ?? 4);
+
+                        try {
+                          await sl<MesasService>().actualizar(
+                            mesaId,
+                            MesaModel(id: mesaId, numero: numMesa, capacidad: cap, estado: 'Libre'),
+                          );
+                        } catch (_) {}
+                        setState(() {
+                          table['status'] = 'Libre';
+                          table['type'] = 'Libre';
+                          table['detail'] = 'Capacidad: $cap personas';
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

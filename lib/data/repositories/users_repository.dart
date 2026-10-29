@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // users_repository.dart
 // CRUD de usuarios del sistema
 // =========================================================
@@ -24,7 +24,7 @@ class UsersRepository {
   }
 
   Future<void> actualizar(int id, UserModel usuario) async {
-    await _client.put(ApiConstants.usuarioActualizar(id), body: usuario.toJson());
+    await _client.put(ApiConstants.usuarioActualizar(id), body: usuario.toUpdateJson());
   }
 
   Future<void> eliminar(int id) async {

@@ -359,16 +359,18 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                 final pagedItems = filtered.sublist(startIndex, endIndex);
 
                                 return Column(
-                                  children: [
-                                    ...pagedItems.map((u) => _buildUserCard(
-                                          initials: _initials(u.name),
-                                          name: u.name,
-                                          email: u.email,
-                                          role: u.role.isNotEmpty ? u.role : 'Sin rol',
-                                          tagColor: _tagColor(u.role),
-                                          tagTextColor: _tagTextColor(u.role),
-                                          sideAccentColor: _sideAccentColor(u.role),
-                                        )),
+                                    children: [
+                                      ...pagedItems.map((u) => _buildUserCard(
+                                            user: u,
+                                            initials: _initials(u.name),
+                                            name: u.name,
+                                            email: u.email,
+                                            role: u.role.isNotEmpty ? u.role : 'Sin rol',
+                                            tagColor: _tagColor(u.role),
+                                            tagTextColor: _tagTextColor(u.role),
+                                            sideAccentColor: _sideAccentColor(u.role),
+                                            provider: provider,
+                                          )),
                                     if (totalPages > 1)
                                       PaginationControls(
                                         currentPage: safePage,
@@ -675,6 +677,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Widget _buildUserCard({
+    required UserModel user,
     required String initials,
     required String name,
     required String email,
@@ -682,6 +685,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     required Color tagColor,
     required Color tagTextColor,
     required Color sideAccentColor,
+    required UserProvider provider,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -765,19 +769,56 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                           ),
                           Row(
                             children: [
-                              const Icon(Icons.edit_outlined,
-                                  size: 18, color: Colors.grey),
-                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined,
+                                    size: 20, color: Color(0xFF322018)),
+                                onPressed: () => _showEditUserDialog(context, user, provider),
+                                constraints: const BoxConstraints(),
+                                padding: const EdgeInsets.all(4),
+                              ),
+                              const SizedBox(width: 4),
                               Transform.scale(
-                                scale: 0.7,
+                                scale: 0.75,
                                 child: Switch(
-                                  value: true,
-                                  onChanged: (val) {},
-                                  thumbColor:
-                                      WidgetStateProperty.all(Colors.white),
-                                  trackColor: WidgetStateProperty.all(
-                                      const Color(0xFF322018)),
+                                  value: user.activo,
+                                  onChanged: (val) async {
+                                    final messenger = ScaffoldMessenger.of(context);
+                                    final updatedUser = UserModel(
+                                      id: user.id,
+                                      name: user.name,
+                                      email: user.email,
+                                      role: user.role,
+                                      rolId: user.rolId,
+                                      activo: val,
+                                    );
+                                    final ok = await provider.updateUser(user.id, updatedUser);
+                                    messenger.clearSnackBars();
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text(ok
+                                            ? 'Usuario ${val ? "activado" : "desactivado"}'
+                                            : provider.errorMessage),
+                                        backgroundColor: ok ? const Color(0xFF322018) : Colors.redAccent,
+                                        duration: const Duration(seconds: 1),
+                                      ),
+                                    );
+                                  },
+                                  thumbColor: WidgetStateProperty.all(Colors.white),
+                                  trackColor: WidgetStateProperty.resolveWith((states) {
+                                    if (states.contains(WidgetState.selected)) {
+                                      return const Color(0xFF322018);
+                                    }
+                                    return Colors.grey.shade400;
+                                  }),
                                 ),
+                              ),
+                              const SizedBox(width: 4),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline_rounded,
+                                    size: 20, color: Colors.redAccent),
+                                onPressed: () => _confirmDeleteUser(context, user, provider),
+                                constraints: const BoxConstraints(),
+                                padding: const EdgeInsets.all(4),
                               ),
                             ],
                           ),
@@ -790,6 +831,162 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // Diálogo para editar rol y datos de usuario
+  void _showEditUserDialog(BuildContext ctx, UserModel user, UserProvider provider) {
+    final formKey = GlobalKey<FormState>();
+    final nameCtrl = TextEditingController(text: user.name);
+    final userCtrl = TextEditingController(text: user.email);
+    int selectedRolId = user.rolId ?? 2;
+    String selectedRolNombre = user.role.isNotEmpty ? user.role : 'Mesero';
+    bool isSaving = false;
+
+    final rolesDisponibles = [
+      {'id': 1, 'nombre': 'Administrador'},
+      {'id': 2, 'nombre': 'Mesero'},
+      {'id': 3, 'nombre': 'Gerente'},
+      {'id': 4, 'nombre': 'Cajero'},
+    ];
+
+    showDialog(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: const [
+                Icon(Icons.manage_accounts_rounded, color: Color(0xFF322018)),
+                SizedBox(width: 8),
+                Text('Editar Rol / Usuario', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Nombre Completo',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: userCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Usuario / Login',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      value: rolesDisponibles.any((r) => r['id'] == selectedRolId) ? selectedRolId : 2,
+                      decoration: InputDecoration(
+                        labelText: 'Rol Asignado',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      items: rolesDisponibles.map((r) {
+                        return DropdownMenuItem<int>(
+                          value: r['id'] as int,
+                          child: Text(r['nombre'] as String),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() {
+                            selectedRolId = val;
+                            selectedRolNombre = rolesDisponibles.firstWhere((r) => r['id'] == val)['nombre'] as String;
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.pop(dialogCtx),
+                child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF322018),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        if (!formKey.currentState!.validate()) return;
+                        setDialogState(() => isSaving = true);
+                        final updatedUser = UserModel(
+                          id: user.id,
+                          name: nameCtrl.text.trim(),
+                          email: userCtrl.text.trim(),
+                          role: selectedRolNombre,
+                          rolId: selectedRolId,
+                        );
+                        final messenger = ScaffoldMessenger.of(ctx);
+                        final ok = await provider.updateUser(user.id, updatedUser);
+                        if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                        messenger.clearSnackBars();
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(ok ? 'Usuario actualizado con éxito' : provider.errorMessage),
+                            backgroundColor: ok ? const Color(0xFF322018) : Colors.redAccent,
+                          ),
+                        );
+                      },
+                child: isSaving
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Guardar', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _confirmDeleteUser(BuildContext ctx, UserModel user, UserProvider provider) {
+    showDialog(
+      context: ctx,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Eliminar Usuario'),
+        content: Text('¿Seguro que deseas eliminar al usuario "${user.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              final messenger = ScaffoldMessenger.of(ctx);
+              final ok = await provider.deleteUser(user.id);
+              messenger.clearSnackBars();
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(ok ? 'Usuario eliminado' : provider.errorMessage),
+                  backgroundColor: ok ? const Color(0xFF322018) : Colors.redAccent,
+                ),
+              );
+            },
+            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }

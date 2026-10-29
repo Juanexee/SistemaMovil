@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // inventario_model.dart
 // Modelos para el monitoreo de inventario
 // Cubre RF-MOV-MON-01 (resumen) y RF-MOV-MON-02 (alertas)
@@ -17,10 +17,28 @@ class ResumenInventarioModel {
   });
 
   factory ResumenInventarioModel.fromJson(Map<String, dynamic> json) {
+    double parseNum(dynamic val) {
+      if (val == null) return 0.0;
+      if (val is num) return val.toDouble();
+      return double.tryParse(val.toString()) ?? 0.0;
+    }
+
+    int parseInt(dynamic val) {
+      if (val == null) return 0;
+      if (val is int) return val;
+      return int.tryParse(val.toString()) ?? 0;
+    }
+
     return ResumenInventarioModel(
-      totalInsumos:    json['totalInsumos']    ?? 0,
-      valoracionTotal: (json['valoracionTotal'] ?? 0).toDouble(),
-      tasaAlerta:      (json['tasaAlerta']      ?? 0).toDouble(),
+      totalInsumos: parseInt(
+        json['totalInsumos'] ?? json['totalItems'] ?? json['total'] ?? json['TotalInsumos'],
+      ),
+      valoracionTotal: parseNum(
+        json['valoracionTotal'] ?? json['valorTotal'] ?? json['totalValor'] ?? json['ValoracionTotal'],
+      ),
+      tasaAlerta: parseNum(
+        json['tasaAlerta'] ?? json['porcentajeAlerta'] ?? json['alertaTasa'] ?? json['TasaAlerta'],
+      ),
     );
   }
 }
@@ -42,12 +60,28 @@ class AlertaStockModel {
   });
 
   factory AlertaStockModel.fromJson(Map<String, dynamic> json) {
+    double parseNum(dynamic val) {
+      if (val == null) return 0.0;
+      if (val is num) return val.toDouble();
+      return double.tryParse(val.toString()) ?? 0.0;
+    }
+
+    int parseInt(dynamic val) {
+      if (val == null) return 0;
+      if (val is int) return val;
+      return int.tryParse(val.toString()) ?? 0;
+    }
+
     return AlertaStockModel(
-      id:           json['id']           ?? 0,
-      nombre:       json['nombre']       ?? '',
-      stockActual:  (json['stockActual']  ?? 0).toDouble(),
-      stockMinimo:  (json['stockMinimo']  ?? 0).toDouble(),
-      unidadMedida: json['unidadMedida'] ?? '',
+      id: parseInt(json['id'] ?? json['insumoID'] ?? json['insumoId'] ?? json['_id']),
+      nombre: (json['nombre'] ?? json['nombreInsumo'] ?? json['name'] ?? '').toString(),
+      stockActual: parseNum(
+        json['stockActual'] ?? json['stock'] ?? json['cantidad'] ?? json['existencias'] ?? json['StockActual'],
+      ),
+      stockMinimo: parseNum(
+        json['stockMinimo'] ?? json['minimo'] ?? json['puntoReorden'] ?? json['StockMinimo'],
+      ),
+      unidadMedida: (json['unidadMedida'] ?? json['unidad'] ?? json['unidadMedidaNombre'] ?? json['UnidadMedida'] ?? 'Unidades').toString(),
     );
   }
 }

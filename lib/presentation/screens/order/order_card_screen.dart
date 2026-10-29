@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/di/injection.dart';
 import '../../../services/order_cart_manager.dart';
+import '../../../services/mesas_service.dart';
+import '../../../data/models/mesas_model.dart';
 import '../../providers/ventas_provider.dart';
 import '../../../data/models/ventas_model.dart';
+import '../menu/menu_catalog_screen.dart';
 
 class OrderCartScreen extends StatefulWidget {
   final Map<String, dynamic>? mesa;
@@ -151,10 +155,11 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
 
   // 3. Cabecera con datos de la mesa seleccionada
   Widget _buildTableHeaderSection() {
-    final mesaName = widget.mesa?['name'] ?? 'Mesa 01';
-    final waiterName = widget.mesa?['waiterName'] ?? 'Carlos Rivera';
-    final waiterInitials = widget.mesa?['waiterInitials'] ?? 'CR';
-    final status = widget.mesa?['status'] ?? 'Ocupada';
+    final numMesa = widget.mesa?['numero'] ?? widget.mesa?['id'] ?? 1;
+    final mesaName = widget.mesa?['name'] ?? 'Mesa ${numMesa.toString().padLeft(2, '0')}';
+    final waiterName = widget.mesa?['waiterName'] ?? 'Mesero';
+    final waiterInitials = widget.mesa?['waiterInitials'] ?? 'ME';
+    final status = widget.mesa?['status'] ?? 'Libre';
 
     Color statusColor = Colors.green;
     Color badgeBgColor = const Color(0xFFE8F5E9);
@@ -276,9 +281,71 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
               style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
             ),
             const SizedBox(height: 4),
-            Text(
-              'Selecciona productos en el catálogo con el botón (+)',
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MenuCatalogScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_shopping_cart, size: 18, color: Colors.white),
+                  label: const Text(
+                    'Agregar platillos',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF38231C),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final mesaId = widget.mesa?['id'] is int
+                        ? widget.mesa!['id'] as int
+                        : (int.tryParse(widget.mesa?['id']?.toString() ?? '') ?? 0);
+                    final numMesa = widget.mesa?['numero'] is int
+                        ? widget.mesa!['numero'] as int
+                        : (int.tryParse(widget.mesa?['numero']?.toString() ?? '') ?? 1);
+                    final cap = widget.mesa?['capacidad'] is int
+                        ? widget.mesa!['capacidad'] as int
+                        : (int.tryParse(widget.mesa?['capacidad']?.toString() ?? '') ?? 4);
+
+                    if (mesaId > 0) {
+                      try {
+                        await sl<MesasService>().actualizar(
+                          mesaId,
+                          MesaModel(id: mesaId, numero: numMesa, capacidad: cap, estado: 'Libre'),
+                        );
+                      } catch (_) {}
+                    }
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Mesa marcada como Libre')),
+                      );
+                      Navigator.pop(context);
+                    }
+                  },
+                  icon: const Icon(Icons.check_circle_outline, size: 18, color: Colors.green),
+                  label: const Text(
+                    'Liberar mesa',
+                    style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.green),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

@@ -399,7 +399,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
         : alerta.nombre.substring(0, alerta.nombre.length.clamp(0, 2)).toUpperCase();
 
-    final isHealthy = alerta.stockActual >= alerta.stockMinimo;
+    // Si el stock actual es 0 (o menor o igual al mínimo), está en bajo stock/crítico
+    final isHealthy = alerta.stockActual > alerta.stockMinimo && alerta.stockActual > 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

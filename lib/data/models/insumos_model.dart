@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // insumos_model.dart
 // =========================================================
 class InsumoModel {
@@ -21,14 +21,34 @@ class InsumoModel {
   });
 
   factory InsumoModel.fromJson(Map<String, dynamic> json) {
+    double parseNum(dynamic val) {
+      if (val == null) return 0.0;
+      if (val is num) return val.toDouble();
+      return double.tryParse(val.toString()) ?? 0.0;
+    }
+
+    int parseInt(dynamic val) {
+      if (val == null) return 0;
+      if (val is int) return val;
+      return int.tryParse(val.toString()) ?? 0;
+    }
+
     return InsumoModel(
-      id:                  json['id']                ?? 0,
-      nombre:              json['nombre']            ?? '',
-      stock:               (json['stock']            ?? 0).toDouble(),
-      stockMinimo:         (json['stockMinimo']      ?? 0).toDouble(),
-      unidadMedidaId:      json['unidadMedidaId']   ?? 0,
-      unidadMedidaNombre:  json['unidadMedidaNombre'],
-      precioUnitario:      (json['precioUnitario']   ?? 0).toDouble(),
+      id: parseInt(json['insumoID'] ?? json['insumoId'] ?? json['id'] ?? json['_id']),
+      nombre: (json['nombreInsumo'] ?? json['nombre'] ?? json['name'] ?? '').toString(),
+      stock: parseNum(
+        json['stock'] ?? json['stockActual'] ?? json['cantidad'] ?? json['existencias'] ?? json['cantidadDisponible'] ?? json['Stock'],
+      ),
+      stockMinimo: parseNum(
+        json['stockMinimo'] ?? json['minimo'] ?? json['puntoReorden'] ?? json['StockMinimo'],
+      ),
+      unidadMedidaId: parseInt(
+        json['unidadMedidaId'] ?? json['unidadMedidaID'] ?? json['idUnidadMedida'],
+      ),
+      unidadMedidaNombre: (json['unidadMedidaNombre'] ?? json['unidadMedida'] ?? json['unidad'] ?? json['UnidadMedida'])?.toString(),
+      precioUnitario: parseNum(
+        json['precioUnitario'] ?? json['costoUnitario'] ?? json['precio'] ?? json['costo'] ?? json['PrecioUnitario'],
+      ),
     );
   }
 

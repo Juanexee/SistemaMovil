@@ -574,11 +574,11 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                           label: 'Ver orden',
                           textColor: Colors.amberAccent,
                           onPressed: () {
-                            Navigator.push(
-                              context,
+                            if (!context.mounted) return;
+                            Navigator.of(context).push(
                               MaterialPageRoute(
-                                  builder: (context) =>
-                                      const OrderCartScreen()),
+                                builder: (_) => const OrderCartScreen(),
+                              ),
                             );
                           },
                         ),

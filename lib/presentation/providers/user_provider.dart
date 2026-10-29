@@ -56,6 +56,40 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  // Método para actualizar usuario existente
+  Future<bool> updateUser(int id, UserModel usuario) async {
+    _isLoading = true;
+    _errorMessage = '';
+    notifyListeners();
+    try {
+      await _userService.actualizar(id, usuario);
+      await loadUsers();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Error al actualizar usuario: ${e.toString().replaceFirst("Exception: ", "")}';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Método para eliminar usuario
+  Future<bool> deleteUser(int id) async {
+    _isLoading = true;
+    _errorMessage = '';
+    notifyListeners();
+    try {
+      await _userService.eliminar(id);
+      await loadUsers();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Error al eliminar usuario: ${e.toString().replaceFirst("Exception: ", "")}';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Limpia los datos almacenados al cerrar sesión o cambiar de usuario
   void clear() {
     _users = [];
