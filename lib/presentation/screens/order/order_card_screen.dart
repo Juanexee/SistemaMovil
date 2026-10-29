@@ -20,6 +20,17 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
   final _cartManager = OrderCartManager();
   bool _isSubmitting = false;
 
+  Map<String, dynamic>? get _effectiveMesa =>
+      widget.mesa ?? _cartManager.activeMesa;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.mesa != null) {
+      _cartManager.setActiveMesa(widget.mesa, notify: false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -155,11 +166,13 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
 
   // 3. Cabecera con datos de la mesa seleccionada
   Widget _buildTableHeaderSection() {
-    final numMesa = widget.mesa?['numero'] ?? widget.mesa?['id'] ?? 1;
-    final mesaName = widget.mesa?['name'] ?? 'Mesa ${numMesa.toString().padLeft(2, '0')}';
-    final waiterName = widget.mesa?['waiterName'] ?? 'Mesero';
-    final waiterInitials = widget.mesa?['waiterInitials'] ?? 'ME';
-    final status = widget.mesa?['status'] ?? 'Libre';
+    final mesaData = _effectiveMesa;
+    final numMesa = mesaData?['numero'] ?? mesaData?['id'] ?? 1;
+    final mesaName =
+        mesaData?['name'] ?? 'Mesa ${numMesa.toString().padLeft(2, '0')}';
+    final waiterName = mesaData?['waiterName'] ?? 'Mesero';
+    final waiterInitials = mesaData?['waiterInitials'] ?? 'ME';
+    final status = mesaData?['status'] ?? 'Libre';
 
     Color statusColor = Colors.green;
     Color badgeBgColor = const Color(0xFFE8F5E9);
@@ -296,53 +309,76 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.add_shopping_cart, size: 18, color: Colors.white),
+                  icon: const Icon(Icons.add_shopping_cart,
+                      size: 18, color: Colors.white),
                   label: const Text(
                     'Agregar platillos',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF38231C),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
                 OutlinedButton.icon(
                   onPressed: () async {
-                    final mesaId = widget.mesa?['id'] is int
-                        ? widget.mesa!['id'] as int
-                        : (int.tryParse(widget.mesa?['id']?.toString() ?? '') ?? 0);
-                    final numMesa = widget.mesa?['numero'] is int
-                        ? widget.mesa!['numero'] as int
-                        : (int.tryParse(widget.mesa?['numero']?.toString() ?? '') ?? 1);
-                    final cap = widget.mesa?['capacidad'] is int
-                        ? widget.mesa!['capacidad'] as int
-                        : (int.tryParse(widget.mesa?['capacidad']?.toString() ?? '') ?? 4);
+                    final mesaData = _effectiveMesa;
+                    final mesaId = mesaData?['id'] is int
+                        ? mesaData!['id'] as int
+                        : (int.tryParse(mesaData?['id']?.toString() ?? '') ??
+                            0);
+                    final numMesa = mesaData?['numero'] is int
+                        ? mesaData!['numero'] as int
+                        : (int.tryParse(
+                                mesaData?['numero']?.toString() ?? '') ??
+                            1);
+                    final cap = mesaData?['capacidad'] is int
+                        ? mesaData!['capacidad'] as int
+                        : (int.tryParse(
+                                mesaData?['capacidad']?.toString() ?? '') ??
+                            4);
 
                     if (mesaId > 0) {
                       try {
                         await sl<MesasService>().actualizar(
                           mesaId,
-                          MesaModel(id: mesaId, numero: numMesa, capacidad: cap, estado: 'Libre'),
+                          MesaModel(
+                              id: mesaId,
+                              numero: numMesa,
+                              capacidad: cap,
+                              estado: 'Libre'),
                         );
                       } catch (_) {}
+                      if (mesaData != null) {
+                        mesaData['status'] = 'Libre';
+                        mesaData['type'] = 'Libre';
+                      }
                     }
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Mesa marcada como Libre')),
+                        const SnackBar(
+                            content: Text('Mesa marcada como Libre')),
                       );
-                      Navigator.pop(context);
+                      Navigator.pop(context, true);
                     }
                   },
-                  icon: const Icon(Icons.check_circle_outline, size: 18, color: Colors.green),
+                  icon: const Icon(Icons.check_circle_outline,
+                      size: 18, color: Colors.green),
                   label: const Text(
                     'Liberar mesa',
-                    style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.green, fontWeight: FontWeight.bold),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.green),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               ],
@@ -562,10 +598,17 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
 
   // 6. Botón principal de acción inferior
   Widget _buildSubmitButton(List<Map<String, dynamic>> items) {
-    final mesaName = widget.mesa?['name'] ?? 'Mesa 01';
-    final mesaId = widget.mesa?['id'] is int
-        ? widget.mesa!['id'] as int
-        : (int.tryParse(widget.mesa?['id']?.toString() ?? '') ?? 1);
+    final mesaData = _effectiveMesa;
+    final mesaName = mesaData?['name'] ?? 'Mesa 01';
+    final mesaId = mesaData?['id'] is int
+        ? mesaData!['id'] as int
+        : (int.tryParse(mesaData?['id']?.toString() ?? '') ?? 1);
+    final numMesa = mesaData?['numero'] is int
+        ? mesaData!['numero'] as int
+        : (int.tryParse(mesaData?['numero']?.toString() ?? '') ?? mesaId);
+    final cap = mesaData?['capacidad'] is int
+        ? mesaData!['capacidad'] as int
+        : (int.tryParse(mesaData?['capacidad']?.toString() ?? '') ?? 4);
     final hasItems = items.isNotEmpty;
 
     return SizedBox(
@@ -573,8 +616,9 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
       height: 50,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor:
-              (hasItems && !_isSubmitting) ? const Color(0xFF2E221E) : Colors.grey.shade400,
+          backgroundColor: (hasItems && !_isSubmitting)
+              ? const Color(0xFF2E221E)
+              : Colors.grey.shade400,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
           ),
@@ -584,7 +628,8 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
             ? () async {
                 setState(() => _isSubmitting = true);
 
-                final ventasProvider = Provider.of<VentasProvider>(context, listen: false);
+                final ventasProvider =
+                    Provider.of<VentasProvider>(context, listen: false);
 
                 // Construimos los detalles a partir de los ítems del carrito
                 final detalles = items.map((item) {
@@ -592,7 +637,8 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                       ? item['id'] as int
                       : (int.tryParse(item['id']?.toString() ?? '') ?? 1);
                   final cantidad = (item['quantity'] as int?) ?? 1;
-                  final precioUnitario = (item['pricePerUnit'] as num?)?.toDouble() ?? 0.0;
+                  final precioUnitario =
+                      (item['pricePerUnit'] as num?)?.toDouble() ?? 0.0;
 
                   return DetalleVentaRequest(
                     platilloId: platilloId,
@@ -607,6 +653,24 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                 );
 
                 final exito = await ventasProvider.registrarVenta(request);
+
+                if (exito && mesaId > 0) {
+                  try {
+                    await sl<MesasService>().actualizar(
+                      mesaId,
+                      MesaModel(
+                        id: mesaId,
+                        numero: numMesa,
+                        capacidad: cap,
+                        estado: 'Ocupada',
+                      ),
+                    );
+                  } catch (_) {}
+                  if (mesaData != null) {
+                    mesaData['status'] = 'Ocupada';
+                    mesaData['type'] = 'Ocupada';
+                  }
+                }
 
                 if (!mounted) return;
                 setState(() => _isSubmitting = false);
@@ -632,8 +696,8 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                         TextButton(
                           onPressed: () {
                             Navigator.pop(ctx);
-                            _cartManager.clear();
-                            Navigator.pop(context);
+                            _cartManager.clear(mesaId: mesaId);
+                            Navigator.pop(context, true);
                           },
                           child: const Text('Aceptar',
                               style: TextStyle(
@@ -649,7 +713,8 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                     SnackBar(
                       content: Row(
                         children: [
-                          const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                          const Icon(Icons.error_outline,
+                              color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(

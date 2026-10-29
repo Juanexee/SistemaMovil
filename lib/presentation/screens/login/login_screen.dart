@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../main/manager_screen.dart';
 import '../main/waiter_screen.dart';
 import 'package:provider/provider.dart';
+import '../../../core/di/injection.dart';
+import '../../../services/auth_service.dart';
 import '../../../presentation/providers/auth_provider.dart';
 
 // Lo converti a StatefulWidget porque necesitamos cambiar el estado del ojito de la contraseña
@@ -16,13 +18,47 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   // Controladores (mezcle un poco los nombres xd)
-  TextEditingController user_ctrl = TextEditingController();
-  TextEditingController passController = TextEditingController();
+  final TextEditingController user_ctrl = TextEditingController();
+  final TextEditingController passController = TextEditingController();
 
   bool _ocultarPassword = true; // Para el evento onPressed del icono
 
   @override
+  void initState() {
+    super.initState();
+    _verificarSesionExistente();
+  }
+
+  Future<void> _verificarSesionExistente() async {
+    try {
+      final authService = sl<AuthService>();
+      final loggedIn = await authService.isLoggedIn();
+      if (!loggedIn || !mounted) return;
+      final role = (await authService.getUserRole() ?? '').toLowerCase();
+      if (!mounted) return;
+      if (role == 'gerente' || role == 'administrador') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const ManagerScreen()),
+        );
+      } else if (role.isNotEmpty) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const WaiterScreen()),
+        );
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    user_ctrl.dispose();
+    passController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: Colors.white,
       // SingleChildScrollView para que no de error de overflow cuando salga el teclado
@@ -211,57 +247,60 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 60,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        // 1. Llamamos al AuthProvider para consumir la API
-                        final authProvider = Provider.of<AuthProvider>(
-                          context,
-                          listen: false,
-                        );
-                        final messenger = ScaffoldMessenger.of(context);
-                        final navigator = Navigator.of(context);
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            if (_formKey.currentState!.validate()) {
+                              // 1. Llamamos al AuthProvider para consumir la API
+                              final authProvider = Provider.of<AuthProvider>(
+                                context,
+                                listen: false,
+                              );
+                              final messenger = ScaffoldMessenger.of(context);
+                              final navigator = Navigator.of(context);
 
-                        bool exito = await authProvider.login(
-                          user_ctrl.text.trim(),
-                          passController.text.trim(),
-                        );
+                              bool exito = await authProvider.login(
+                                user_ctrl.text.trim(),
+                                passController.text.trim(),
+                              );
 
-                        if (!mounted) return;
-                        messenger.clearSnackBars();
+                              if (!mounted) return;
+                              messenger.clearSnackBars();
 
-                        if (exito) {
-                          // 2. Obtenemos el rol real que devolvió el servidor en Azure
-                          String rol =
-                              authProvider.loginResponse?.role.toLowerCase() ??
-                              '';
+                              if (exito) {
+                                // 2. Obtenemos el rol real que devolvió el servidor en Azure
+                                String rol = authProvider.loginResponse?.role
+                                        .toLowerCase() ??
+                                    '';
 
-                          // 3. Redirigimos según el rol de la base de datos
-                          if (rol == 'gerente' || rol == 'administrador') {
-                            navigator.pushReplacement(
-                              MaterialPageRoute(
-                                builder: (_) => const ManagerScreen(),
-                              ),
-                            );
-                          } else {
-                            navigator.pushReplacement(
-                              MaterialPageRoute(
-                                builder: (_) => const WaiterScreen(),
-                              ),
-                            );
-                          }
-                        } else {
-                          // Si falla, mostramos el error que viene del Provider/API con duración controlada
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text(authProvider.errorMessage),
-                              backgroundColor: Colors.redAccent,
-                              behavior: SnackBarBehavior.floating,
-                              duration: const Duration(seconds: 4),
-                            ),
-                          );
-                        }
-                      }
-                    },
+                                // 3. Redirigimos según el rol de la base de datos
+                                if (rol == 'gerente' ||
+                                    rol == 'administrador') {
+                                  navigator.pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (_) => const ManagerScreen(),
+                                    ),
+                                  );
+                                } else {
+                                  navigator.pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (_) => const WaiterScreen(),
+                                    ),
+                                  );
+                                }
+                              } else {
+                                // Si falla, mostramos el error que viene del Provider/API con duración controlada
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(authProvider.errorMessage),
+                                    backgroundColor: Colors.redAccent,
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
+                              }
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(
                         0xFF38231c,
@@ -271,25 +310,34 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Iniciar Sesión',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Iniciar Sesión',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Icon(
+                                Icons.arrow_forward,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ],
                           ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(
-                          Icons.arrow_forward,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ],
-                    ),
                   ),
                 ),
 

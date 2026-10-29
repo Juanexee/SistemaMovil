@@ -5,6 +5,8 @@ import '../../../core/di/injection.dart';
 import '../../../services/platillo_service.dart';
 import '../../../services/categoria_service.dart';
 import '../../../services/order_cart_manager.dart';
+import '../../../data/models/platillo_model.dart';
+import '../../../data/models/categoria_model.dart';
 import '../order/order_card_screen.dart';
 
 class MenuCatalogScreen extends StatefulWidget {
@@ -50,8 +52,13 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
       final categoriasFuture = sl<CategoriaService>().getCategorias();
       final results = await Future.wait([platillosFuture, categoriasFuture]);
 
-      final platillos = results[0] as List;
-      final categorias = results[1] as List;
+      final platillos = results[0] as List<PlatilloModel>;
+      final categorias = results[1] as List<CategoriaModel>;
+
+      // Mapa de ID de categoría -> Nombre para resolver categorías cuando el platillo solo trae categoriaId
+      final Map<int, String> catMap = {
+        for (final c in categorias) c.id: c.nombre,
+      };
 
       if (mounted) {
         setState(() {
@@ -59,12 +66,19 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
             _categories.clear();
             _categories.add('Todas');
             for (final c in categorias) {
-              if (c.activo) _categories.add(c.nombre);
+              if (c.activo && !_categories.contains(c.nombre)) {
+                _categories.add(c.nombre);
+              }
             }
           }
           if (platillos.isNotEmpty) {
             _dishes.clear();
             for (final p in platillos) {
+              if (!p.disponible) continue; // Solo mostrar platillos disponibles
+              final resolvedCat = (p.categoriaNombre != null &&
+                      p.categoriaNombre!.trim().isNotEmpty)
+                  ? p.categoriaNombre!.trim()
+                  : (catMap[p.categoriaId] ?? '');
               _dishes.add({
                 'id': p.id.toString(),
                 'title': p.nombre,
@@ -75,9 +89,12 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                 'rawPrice': p.precio.toString(),
                 'imageUrl': p.imagenUrl ?? '',
                 'image': 'assets/images/Carne Asada.jpg',
-                'categoria': p.categoriaNombre ?? '',
+                'categoria': resolvedCat,
               });
             }
+          }
+          if (_selectedCategoryIndex >= _categories.length) {
+            _selectedCategoryIndex = 0;
           }
           _isLoading = false;
         });
@@ -126,11 +143,11 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
       if (_selectedCategoryIndex > 0 &&
           _selectedCategoryIndex < _categories.length) {
         final catSeleccionada =
-            _categories[_selectedCategoryIndex].toLowerCase();
-        final dishCat = (dish['categoria'] ?? '').toLowerCase();
-        if (dishCat.isNotEmpty &&
-            !dishCat.contains(catSeleccionada) &&
-            !catSeleccionada.contains(dishCat)) {
+            _categories[_selectedCategoryIndex].toLowerCase().trim();
+        final dishCat = (dish['categoria'] ?? '').toLowerCase().trim();
+        if (dishCat.isEmpty ||
+            (!dishCat.contains(catSeleccionada) &&
+                !catSeleccionada.contains(dishCat))) {
           return false;
         }
       }
@@ -239,7 +256,10 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const OrderCartScreen()),
+                        builder: (context) => OrderCartScreen(
+                          mesa: OrderCartManager().activeMesa,
+                        ),
+                      ),
                     );
                   },
                   borderRadius: BorderRadius.circular(20),
@@ -577,7 +597,9 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                             if (!context.mounted) return;
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => const OrderCartScreen(),
+                                builder: (_) => OrderCartScreen(
+                                  mesa: OrderCartManager().activeMesa,
+                                ),
                               ),
                             );
                           },

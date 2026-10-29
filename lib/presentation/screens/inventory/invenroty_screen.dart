@@ -11,7 +11,7 @@ class InventoryScreen extends StatefulWidget {
 }
 
 class _InventoryScreenState extends State<InventoryScreen> {
-  TextEditingController search_ctrl = TextEditingController();
+  final TextEditingController search_ctrl = TextEditingController();
   String _searchQuery = '';
 
   @override
@@ -47,8 +47,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
             final filteredAlertas = _searchQuery.isEmpty
                 ? alertas
                 : alertas
-                    .where((a) =>
-                        a.nombre.toLowerCase().contains(_searchQuery))
+                    .where(
+                        (a) => a.nombre.toLowerCase().contains(_searchQuery))
                     .toList();
 
             return SingleChildScrollView(
@@ -127,8 +127,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              border:
-                                  Border.all(color: Colors.grey.shade300),
+                              border: Border.all(color: Colors.grey.shade300),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
@@ -162,8 +161,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             color: Colors.black38,
                           ),
                           border: InputBorder.none,
-                          contentPadding:
-                              EdgeInsets.symmetric(vertical: 15),
+                          contentPadding: EdgeInsets.symmetric(vertical: 15),
                         ),
                       ),
                     ),
@@ -188,7 +186,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             decoration: BoxDecoration(
                               color: Colors.amber.shade50,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.amber.shade200),
+                              border:
+                                  Border.all(color: Colors.amber.shade200),
                             ),
                             child: Row(
                               children: [
@@ -199,7 +198,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                   child: Text(
                                     provider.errorMessage,
                                     style: TextStyle(
-                                        color: Colors.amber.shade900, fontSize: 12),
+                                        color: Colors.amber.shade900,
+                                        fontSize: 12),
                                   ),
                                 ),
                               ],
@@ -364,8 +364,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 Text(
                                   'Todo el stock está en niveles normales',
                                   style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14),
+                                      color: Colors.grey[600], fontSize: 14),
                                   textAlign: TextAlign.center,
                                 ),
                               ],
@@ -393,14 +392,19 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   // Fila de alerta de inventario (viene de la API)
   Widget _buildInventoryRow(AlertaStockModel alerta) {
-    // Iniciales del nombre del insumo
-    final parts = alerta.nombre.trim().split(' ');
-    final initials = parts.length >= 2
-        ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
-        : alerta.nombre.substring(0, alerta.nombre.length.clamp(0, 2)).toUpperCase();
+    // Iniciales del nombre del insumo de forma segura
+    final trimmed = alerta.nombre.trim();
+    final parts = trimmed.split(RegExp(r'\s+'));
+    String initials = '?';
+    if (parts.length >= 2 && parts[0].isNotEmpty && parts[1].isNotEmpty) {
+      initials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    } else if (trimmed.isNotEmpty) {
+      initials = trimmed.substring(0, trimmed.length.clamp(0, 2)).toUpperCase();
+    }
 
     // Si el stock actual es 0 (o menor o igual al mínimo), está en bajo stock/crítico
-    final isHealthy = alerta.stockActual > alerta.stockMinimo && alerta.stockActual > 0;
+    final isHealthy =
+        alerta.stockActual > alerta.stockMinimo && alerta.stockActual > 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

@@ -28,6 +28,14 @@ class UsersRepository {
   }
 
   Future<void> eliminar(int id) async {
-    await _client.put(ApiConstants.usuarioEliminar(id));
+    try {
+      await _client.put(ApiConstants.usuarioEliminar(id));
+    } catch (e) {
+      if (e.toString().contains('405')) {
+        await _client.delete(ApiConstants.usuarioEliminar(id));
+      } else {
+        rethrow;
+      }
+    }
   }
 }

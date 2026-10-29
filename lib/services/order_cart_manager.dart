@@ -5,23 +5,51 @@ class OrderCartManager extends ChangeNotifier {
   factory OrderCartManager() => _instance;
   OrderCartManager._internal();
 
-  final List<Map<String, dynamic>> _items = [];
+  // Carrito separado por ID de mesa para no mezclar comandas entre mesas
+  final Map<int, List<Map<String, dynamic>>> _cartsByMesa = {};
+  Map<String, dynamic>? _activeMesa;
 
-  List<Map<String, dynamic>> get items => _items;
+  Map<String, dynamic>? get activeMesa => _activeMesa;
 
-  int get totalCount => _items.fold(0, (sum, i) => sum + (i['quantity'] as int));
+  int get currentMesaId {
+    final id = _activeMesa?['id'];
+    if (id is int) return id;
+    if (id != null) return int.tryParse(id.toString()) ?? 1;
+    return 1;
+  }
+
+  void setActiveMesa(Map<String, dynamic>? mesa, {bool notify = true}) {
+    _activeMesa = mesa;
+    if (notify) notifyListeners();
+  }
+
+  List<Map<String, dynamic>> _listForMesa([int? mesaId]) {
+    final id = mesaId ?? currentMesaId;
+    return _cartsByMesa.putIfAbsent(id, () => []);
+  }
+
+  List<Map<String, dynamic>> get items => _listForMesa();
+
+  List<Map<String, dynamic>> itemsForMesa(int mesaId) => _listForMesa(mesaId);
+
+  int get totalCount =>
+      items.fold(0, (sum, i) => sum + (i['quantity'] as int));
 
   void addItem({
     int? id,
     required String title,
     required double price,
     String note = '',
+    int? mesaId,
   }) {
-    final existingIndex = _items.indexWhere((i) => i['title'] == title);
+    final list = _listForMesa(mesaId);
+    final existingIndex = list.indexWhere((i) =>
+        (id != null && i['id'] == id) || i['title'] == title);
     if (existingIndex != -1) {
-      _items[existingIndex]['quantity'] = (_items[existingIndex]['quantity'] as int) + 1;
+      list[existingIndex]['quantity'] =
+          (list[existingIndex]['quantity'] as int) + 1;
     } else {
-      _items.add({
+      list.add({
         'id': id,
         'title': title,
         'note': note.isNotEmpty ? note : 'Estándar',
@@ -32,30 +60,40 @@ class OrderCartManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  void removeItem(int index) {
-    if (index >= 0 && index < _items.length) {
-      _items.removeAt(index);
+  void removeItem(int index, {int? mesaId}) {
+    final list = _listForMesa(mesaId);
+    if (index >= 0 && index < list.length) {
+      list.removeAt(index);
       notifyListeners();
     }
   }
 
-  void updateQuantity(int index, int delta) {
-    if (index >= 0 && index < _items.length) {
-      final q = (_items[index]['quantity'] as int) + delta;
+  void updateQuantity(int index, int delta, {int? mesaId}) {
+    final list = _listForMesa(mesaId);
+    if (index >= 0 && index < list.length) {
+      final q = (list[index]['quantity'] as int) + delta;
       if (q > 0) {
-        _items[index]['quantity'] = q;
+        list[index]['quantity'] = q;
       } else {
-        _items.removeAt(index);
+        list.removeAt(index);
       }
       notifyListeners();
     }
   }
 
-  void clear() {
-    _items.clear();
+  void clear({int? mesaId}) {
+    _listForMesa(mesaId).clear();
     notifyListeners();
   }
 
-  double get subtotal => _items.fold(
-      0.0, (sum, i) => sum + ((i['pricePerUnit'] as double) * (i['quantity'] as int)));
+  void clearAll() {
+    _cartsByMesa.clear();
+    _activeMesa = null;
+    notifyListeners();
+  }
+
+  double get subtotal => items.fold(
+      0.0,
+      (sum, i) =>
+          sum + ((i['pricePerUnit'] as double) * (i['quantity'] as int)));
 }

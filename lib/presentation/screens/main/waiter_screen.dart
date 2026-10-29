@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/user_provider.dart';
+import '../../providers/ventas_provider.dart';
+import '../../providers/inventario_provider.dart';
+import '../../providers/pedidos_provider.dart';
+import '../../../services/order_cart_manager.dart';
 
 import '../table/table_screen.dart';
 import '../menu/menu_catalog_screen.dart';
@@ -23,9 +28,10 @@ class _WaiterScreenState extends State<WaiterScreen> {
     // Lista con las vistas específicas para el Mesero, se inicializa aquí para poder pasar el context
     final List<Widget> screens = [
       TableManagementScreen(
-        onTableTap: (mesa) {
+        onTableTap: (mesa) async {
+          OrderCartManager().setActiveMesa(mesa);
           // Recibimos la mesa seleccionada y navegamos a la pantalla de Comanda con esa mesa específica
-          Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => OrderCartScreen(mesa: mesa)),
           );
@@ -52,7 +58,19 @@ class _WaiterScreenState extends State<WaiterScreen> {
             // Botón de cerrar sesión
             InkWell(
               onTap: () async {
-                await Provider.of<AuthProvider>(context, listen: false).logout();
+                final authProv = Provider.of<AuthProvider>(context, listen: false);
+                final userProv = Provider.of<UserProvider>(context, listen: false);
+                final ventasProv = Provider.of<VentasProvider>(context, listen: false);
+                final invProv = Provider.of<InventarioProvider>(context, listen: false);
+                final pedidosProv = Provider.of<PedidosProvider>(context, listen: false);
+
+                await authProv.logout();
+                userProv.clear();
+                ventasProv.clear();
+                invProv.clear();
+                pedidosProv.clear();
+                OrderCartManager().clearAll();
+
                 if (!context.mounted) return;
                 Navigator.pushAndRemoveUntil(
                   context,
@@ -65,14 +83,14 @@ class _WaiterScreenState extends State<WaiterScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
+                  children: const [
+                    Icon(
                       Icons.logout,
                       color: Colors.redAccent,
                       size: 24,
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
+                    SizedBox(height: 4),
+                    Text(
                       'Salir',
                       style: TextStyle(
                         color: Colors.redAccent,

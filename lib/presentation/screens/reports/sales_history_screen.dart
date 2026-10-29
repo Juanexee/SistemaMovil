@@ -12,8 +12,11 @@ class SalesHistoryScreen extends StatefulWidget {
 }
 
 class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
-  TextEditingController search_ctrl = TextEditingController();
+  final TextEditingController search_ctrl = TextEditingController();
   String _searchQuery = '';
+  String _selectedEstado = 'Todos';
+  String _selectedRango = 'Todos'; // 'Todos', 'Hoy', 'Últimos 7 días'
+  double? _minMonto;
   int _currentPage = 1;
   static const int _itemsPerPage = 15;
 
@@ -38,24 +41,60 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     super.dispose();
   }
 
-  // Filtra las ventas por ID o estado
+  // Filtra las ventas por ID, estado, rango de fechas y monto
   List<VentaModel> _filteredVentas(List<VentaModel> all) {
-    if (_searchQuery.isEmpty) return all;
-    return all.where((v) =>
-        '#${v.id}'.contains(_searchQuery) ||
-        v.estado.toLowerCase().contains(_searchQuery) ||
-        (v.metodoPago?.toLowerCase().contains(_searchQuery) ?? false)).toList();
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+
+    return all.where((v) {
+      if (_searchQuery.isNotEmpty) {
+        final matchSearch = '#${v.id}'.contains(_searchQuery) ||
+            v.estado.toLowerCase().contains(_searchQuery) ||
+            (v.metodoPago?.toLowerCase().contains(_searchQuery) ?? false);
+        if (!matchSearch) return false;
+      }
+
+      if (_selectedEstado != 'Todos') {
+        if (!v.estado.toLowerCase().contains(_selectedEstado.toLowerCase())) {
+          return false;
+        }
+      }
+
+      if (_minMonto != null && v.total < _minMonto!) {
+        return false;
+      }
+
+      if (_selectedRango != 'Todos' && v.fecha != null && v.fecha!.isNotEmpty) {
+        try {
+          final dt = DateTime.parse(v.fecha!).toLocal();
+          final dtDate = DateTime(dt.year, dt.month, dt.day);
+          if (_selectedRango == 'Hoy' && dtDate != todayStart) {
+            return false;
+          } else if (_selectedRango == 'Últimos 7 días' &&
+              todayStart.difference(dtDate).inDays > 7) {
+            return false;
+          }
+        } catch (_) {}
+      }
+
+      return true;
+    }).toList();
   }
 
-  // Formatea fecha (la API puede mandar ISO8601)
+  // Formatea fecha comparando por día calendario real
   String _formatFecha(String? fecha) {
     if (fecha == null || fecha.isEmpty) return 'Sin fecha';
     try {
       final dt = DateTime.parse(fecha).toLocal();
       final now = DateTime.now();
-      final diff = now.difference(dt);
-      if (diff.inDays == 0) return 'Hoy, ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}';
-      if (diff.inDays == 1) return 'Ayer, ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}';
+      final today = DateTime(now.year, now.month, now.day);
+      final dtDay = DateTime(dt.year, dt.month, dt.day);
+      final diffDays = today.difference(dtDay).inDays;
+      final hh = dt.hour.toString().padLeft(2, '0');
+      final mm = dt.minute.toString().padLeft(2, '0');
+
+      if (diffDays == 0) return 'Hoy, $hh:$mm';
+      if (diffDays == 1) return 'Ayer, $hh:$mm';
       return '${dt.day}/${dt.month}/${dt.year}';
     } catch (_) {
       return fecha;
@@ -81,8 +120,10 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             final all = provider.ventas;
             final filtered = _filteredVentas(all);
 
-            // Totales para el resumen
-            final totalHoy = all.fold<double>(0, (sum, v) => sum + v.total);
+            // Totales para el resumen (excluyendo ventas canceladas)
+            final totalHoy = all
+                .where((v) => !v.estado.toLowerCase().contains('cancel'))
+                .fold<double>(0, (sum, v) => sum + v.total);
             final countHoy = all.length;
 
             return SingleChildScrollView(
@@ -156,17 +197,24 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         ),
                         // Botón de actualizar
                         InkWell(
-                          onTap: () => provider.loadVentas(),
+                          onTap: () {
+                            setState(() {
+                              _selectedEstado = 'Todos';
+                              _selectedRango = 'Todos';
+                              _minMonto = null;
+                              _currentPage = 1;
+                            });
+                            provider.loadVentas();
+                          },
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              border:
-                                  Border.all(color: Colors.grey.shade300),
+                              border: Border.all(color: Colors.grey.shade300),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
-                              Icons.tune,
+                              Icons.refresh,
                               color: Colors.black87,
                               size: 20,
                             ),
@@ -201,24 +249,77 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                             color: Colors.black38,
                           ),
                           border: InputBorder.none,
-                          contentPadding:
-                              EdgeInsets.symmetric(vertical: 15),
+                          contentPadding: EdgeInsets.symmetric(vertical: 15),
                         ),
                       ),
                     ),
 
                     const SizedBox(height: 15),
 
-                    // FILTROS
+                    // FILTROS INTERACTIVOS
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          _buildFilterChip('Rango de fechas'),
+                          _buildFilterChip(
+                            label: _selectedRango == 'Todos'
+                                ? 'Rango de fechas'
+                                : 'Fecha: $_selectedRango',
+                            isActive: _selectedRango != 'Todos',
+                            onTap: () {
+                              const opciones = [
+                                'Todos',
+                                'Hoy',
+                                'Últimos 7 días',
+                              ];
+                              final nextIdx =
+                                  (opciones.indexOf(_selectedRango) + 1) %
+                                      opciones.length;
+                              setState(() {
+                                _selectedRango = opciones[nextIdx];
+                                _currentPage = 1;
+                              });
+                            },
+                          ),
                           const SizedBox(width: 10),
-                          _buildFilterChip('Monto'),
+                          _buildFilterChip(
+                            label: _minMonto == null
+                                ? 'Monto'
+                                : 'Monto ≥ C\$ ${_minMonto!.toInt()}',
+                            isActive: _minMonto != null,
+                            onTap: () {
+                              const opciones = <double?>[null, 100, 300, 500];
+                              final nextIdx =
+                                  (opciones.indexOf(_minMonto) + 1) %
+                                      opciones.length;
+                              setState(() {
+                                _minMonto = opciones[nextIdx];
+                                _currentPage = 1;
+                              });
+                            },
+                          ),
                           const SizedBox(width: 10),
-                          _buildFilterChip('Estado'),
+                          _buildFilterChip(
+                            label: _selectedEstado == 'Todos'
+                                ? 'Estado'
+                                : 'Estado: $_selectedEstado',
+                            isActive: _selectedEstado != 'Todos',
+                            onTap: () {
+                              const estados = [
+                                'Todos',
+                                'Pagada',
+                                'Pendiente',
+                                'Cancelada',
+                              ];
+                              final nextIdx =
+                                  (estados.indexOf(_selectedEstado) + 1) %
+                                      estados.length;
+                              setState(() {
+                                _selectedEstado = estados[nextIdx];
+                                _currentPage = 1;
+                              });
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -235,15 +336,18 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                       )
                     else ...[
                       // AVISO INFORMATIVO DE PERMISOS / ERROR
-                      if (provider.errorMessage.isNotEmpty && provider.ventas.isEmpty)
+                      if (provider.errorMessage.isNotEmpty &&
+                          provider.ventas.isEmpty)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFF8E1),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFFFD54F)),
+                              border:
+                                  Border.all(color: const Color(0xFFFFD54F)),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,8 +386,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
                                     'Total de ventas',
@@ -334,12 +437,11 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                    color: Colors.grey.shade200),
+                                border:
+                                    Border.all(color: Colors.grey.shade200),
                               ),
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     'Transacciones',
@@ -393,7 +495,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Total: C\$ ${filtered.fold<double>(0, (s, v) => s + v.total).toStringAsFixed(2)}',
+                            'Total: C\$ ${filtered.where((v) => !v.estado.toLowerCase().contains('cancel')).fold<double>(0, (s, v) => s + v.total).toStringAsFixed(2)}',
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 12,
@@ -418,19 +520,23 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                             padding: const EdgeInsets.all(30.0),
                             child: Text(
                               'No se encontraron ventas',
-                              style:
-                                  TextStyle(color: Colors.grey[500]),
+                              style: TextStyle(color: Colors.grey[500]),
                             ),
                           ),
                         )
                       else ...[
                         Builder(
                           builder: (context) {
-                            final totalPages = (filtered.length / _itemsPerPage).ceil();
-                            final safePage = _currentPage.clamp(1, totalPages > 0 ? totalPages : 1);
-                            final startIndex = (safePage - 1) * _itemsPerPage;
-                            final endIndex = (startIndex + _itemsPerPage).clamp(0, filtered.length);
-                            final pagedItems = filtered.sublist(startIndex, endIndex);
+                            final totalPages =
+                                (filtered.length / _itemsPerPage).ceil();
+                            final safePage = _currentPage.clamp(
+                                1, totalPages > 0 ? totalPages : 1);
+                            final startIndex =
+                                (safePage - 1) * _itemsPerPage;
+                            final endIndex = (startIndex + _itemsPerPage)
+                                .clamp(0, filtered.length);
+                            final pagedItems =
+                                filtered.sublist(startIndex, endIndex);
 
                             return Column(
                               children: [
@@ -463,25 +569,40 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 13, color: Colors.black87),
+  Widget _buildFilterChip({
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF38231c) : Colors.white,
+          border: Border.all(
+            color: isActive ? const Color(0xFF38231c) : Colors.grey.shade300,
           ),
-          const SizedBox(width: 5),
-          const Icon(Icons.keyboard_arrow_down,
-              size: 16, color: Colors.black54),
-        ],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: isActive ? Colors.white : Colors.black87,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Icon(
+              Icons.keyboard_arrow_down,
+              size: 16,
+              color: isActive ? Colors.white : Colors.black54,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -509,8 +630,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               color: Color(0xFFF5EBE6),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon,
-                color: const Color(0xFF8A6D5C), size: 20),
+            child: Icon(icon, color: const Color(0xFF8A6D5C), size: 20),
           ),
           const SizedBox(width: 15),
 
@@ -529,14 +649,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 const SizedBox(height: 4),
                 Text(
                   fecha,
-                  style: TextStyle(
-                      color: Colors.grey[500], fontSize: 12),
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   metodo,
-                  style: TextStyle(
-                      color: Colors.grey[500], fontSize: 12),
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
                 ),
               ],
             ),
@@ -555,8 +673,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               ),
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: estadoColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
@@ -579,7 +697,9 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
   Color _estadoColor(String estado) {
     final e = estado.toLowerCase();
-    if (e.contains('pagad') || e.contains('cobrad') || e.contains('completad')) {
+    if (e.contains('pagad') ||
+        e.contains('cobrad') ||
+        e.contains('completad')) {
       return Colors.green;
     }
     if (e.contains('pendiente') || e.contains('activ')) {

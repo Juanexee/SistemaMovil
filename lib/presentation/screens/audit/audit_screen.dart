@@ -15,8 +15,9 @@ class AuditLogsScreen extends StatefulWidget {
 
 class _AuditLogsScreenState extends State<AuditLogsScreen> {
   // Controlador para el buscador
-  TextEditingController search_ctrl = TextEditingController();
+  final TextEditingController search_ctrl = TextEditingController();
   String _searchQuery = '';
+  String _selectedTipoEvento = 'Todos';
   int _currentPage = 1;
   static const int _itemsPerPage = 15;
 
@@ -43,12 +44,21 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
   }
 
   List<LogAuditoriaModel> get _filteredLogs {
-    if (_searchQuery.isEmpty) return _logs;
     return _logs.where((l) {
-      return l.descripcion.toLowerCase().contains(_searchQuery) ||
-          l.tipoEvento.toLowerCase().contains(_searchQuery) ||
-          l.usuarioResponsable.toLowerCase().contains(_searchQuery) ||
-          l.modulo.toLowerCase().contains(_searchQuery);
+      if (_selectedTipoEvento != 'Todos') {
+        if (!l.tipoEvento
+            .toLowerCase()
+            .contains(_selectedTipoEvento.toLowerCase())) {
+          return false;
+        }
+      }
+      if (_searchQuery.isNotEmpty) {
+        return l.descripcion.toLowerCase().contains(_searchQuery) ||
+            l.tipoEvento.toLowerCase().contains(_searchQuery) ||
+            l.usuarioResponsable.toLowerCase().contains(_searchQuery) ||
+            l.modulo.toLowerCase().contains(_searchQuery);
+      }
+      return true;
     }).toList();
   }
 
@@ -61,7 +71,8 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
       final results = await Future.wait([
         audService.getLogs().catchError((_) => <LogAuditoriaModel>[]),
         dashService.getKpis().catchError(
-          (_) => KpisModel(ventasDelDia: 0, ticketPromedio: 0, margenAcumulado: 0),
+          (_) =>
+              KpisModel(ventasDelDia: 0, ticketPromedio: 0, margenAcumulado: 0),
         ),
       ]);
 
@@ -92,8 +103,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                 // TOP BAR (Modificado para incluir el logo)
                 Row(
                   children: [
-                    // --- AQUÍ ESTÁ EL CAMBIO ---
-                    // Contenedor que antes tenía 'EL', ahora tiene la imagen
+                    // Contenedor con la imagen del logo
                     Container(
                       width: 35,
                       height: 35,
@@ -103,16 +113,14 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                         ), // Mantenemos el fondo oscuro
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      // Usamos ClipRRect para redondear las esquinas de la imagen si fuera necesario
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.asset(
-                          'assets/images/mimi2.png', // <--- Ruta a tu imagen
-                          fit: BoxFit.cover, // Para que llene el cuadrado
+                          'assets/images/mimi2.png',
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),
-                    // -----------------------------
                     const SizedBox(width: 10),
                     const Text(
                       'El Rancho\nLa Mimi',
@@ -213,16 +221,50 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
 
                 const SizedBox(height: 15),
 
-                // FILTROS
+                // FILTROS INTERACTIVOS
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildFilterChip('Usuario', Icons.person_outline),
+                      _buildFilterChip(
+                        label: 'Usuario',
+                        startIcon: Icons.person_outline,
+                        isActive: false,
+                        onTap: () {
+                          search_ctrl.text = 'admin';
+                        },
+                      ),
                       const SizedBox(width: 10),
-                      _buildFilterChip('Fecha', Icons.calendar_today_outlined),
+                      _buildFilterChip(
+                        label: 'Actualizar',
+                        startIcon: Icons.refresh,
+                        isActive: false,
+                        onTap: _cargarDatos,
+                      ),
                       const SizedBox(width: 10),
-                      _buildFilterChip('Tipo de evento', Icons.filter_list),
+                      _buildFilterChip(
+                        label: _selectedTipoEvento == 'Todos'
+                            ? 'Tipo de evento'
+                            : 'Evento: $_selectedTipoEvento',
+                        startIcon: Icons.filter_list,
+                        isActive: _selectedTipoEvento != 'Todos',
+                        onTap: () {
+                          const tipos = [
+                            'Todos',
+                            'LOGIN',
+                            'VENTA',
+                            'ANULACION',
+                            'ERROR',
+                          ];
+                          final nextIdx =
+                              (tipos.indexOf(_selectedTipoEvento) + 1) %
+                                  tipos.length;
+                          setState(() {
+                            _selectedTipoEvento = tipos[nextIdx];
+                            _currentPage = 1;
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -306,10 +348,10 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              '\$${_kpis != null ? _kpis!.ventasDelDia.toStringAsFixed(2) : "0.00"}',
+                              'C\$ ${_kpis != null ? _kpis!.ventasDelDia.toStringAsFixed(2) : "0.00"}',
                               style: const TextStyle(
                                 color: Colors.black87,
-                                fontSize: 24,
+                                fontSize: 22,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -324,7 +366,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
-                                    'Ticket: \$${_kpis != null ? _kpis!.ticketPromedio.toStringAsFixed(2) : "0.00"}',
+                                    'Ticket: C\$ ${_kpis != null ? _kpis!.ticketPromedio.toStringAsFixed(2) : "0.00"}',
                                     style: TextStyle(
                                       color: Colors.grey[600],
                                       fontSize: 11,
@@ -357,7 +399,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                       ),
                     ),
                     Text(
-                      '${_logs.length} registros',
+                      '${_filteredLogs.length} registros',
                       style: TextStyle(color: Colors.grey[500], fontSize: 13),
                     ),
                   ],
@@ -389,13 +431,15 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                     ),
                     child: Column(
                       children: [
-                        Icon(Icons.inbox_outlined, size: 40, color: Colors.grey[400]),
+                        Icon(Icons.inbox_outlined,
+                            size: 40, color: Colors.grey[400]),
                         const SizedBox(height: 10),
                         Text(
                           _searchQuery.isNotEmpty
                               ? 'No se encontraron eventos con "$_searchQuery"'
                               : 'No hay eventos de auditoría registrados',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                          style:
+                              TextStyle(color: Colors.grey[600], fontSize: 14),
                         ),
                       ],
                     ),
@@ -405,24 +449,30 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                     builder: (context) {
                       final logs = _filteredLogs;
                       final totalPages = (logs.length / _itemsPerPage).ceil();
-                      final safePage = _currentPage.clamp(1, totalPages > 0 ? totalPages : 1);
+                      final safePage = _currentPage.clamp(
+                          1, totalPages > 0 ? totalPages : 1);
                       final startIndex = (safePage - 1) * _itemsPerPage;
-                      final endIndex = (startIndex + _itemsPerPage).clamp(0, logs.length);
+                      final endIndex = (startIndex + _itemsPerPage)
+                          .clamp(0, logs.length);
                       final pagedItems = logs.sublist(startIndex, endIndex);
 
                       return Column(
                         children: [
                           ...pagedItems.map((log) {
-                            final isWarn = log.tipoEvento.toUpperCase() == 'ANULACION' ||
-                                log.tipoEvento.toUpperCase() == 'ERROR';
+                            final isWarn =
+                                log.tipoEvento.toUpperCase() == 'ANULACION' ||
+                                    log.tipoEvento.toUpperCase() == 'ERROR';
                             final initial = log.usuarioResponsable.isNotEmpty
-                                ? log.usuarioResponsable.substring(0, 1).toUpperCase()
+                                ? log.usuarioResponsable
+                                    .substring(0, 1)
+                                    .toUpperCase()
                                 : 'S';
                             return _buildLogItem(
                               icon: isWarn
                                   ? Icons.warning_amber_rounded
                                   : Icons.check_circle_outline,
-                              iconColor: isWarn ? Colors.red[400]! : Colors.green[400]!,
+                              iconColor:
+                                  isWarn ? Colors.red[400]! : Colors.green[400]!,
                               title: log.descripcion.isNotEmpty
                                   ? log.descripcion
                                   : 'Evento: ${log.tipoEvento}',
@@ -463,29 +513,47 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
   }
 
   // Los filtros con icono que vimos en la maqueta
-  Widget _buildFilterChip(String label, IconData startIcon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Icon(startIcon, size: 14, color: Colors.black54),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 13, color: Colors.black87),
+  Widget _buildFilterChip({
+    required String label,
+    required IconData startIcon,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF38231c) : Colors.white,
+          border: Border.all(
+            color: isActive ? const Color(0xFF38231c) : Colors.grey.shade300,
           ),
-          const SizedBox(width: 6),
-          const Icon(
-            Icons.keyboard_arrow_down,
-            size: 16,
-            color: Colors.black54,
-          ),
-        ],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              startIcon,
+              size: 14,
+              color: isActive ? Colors.white : Colors.black54,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: isActive ? Colors.white : Colors.black87,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.keyboard_arrow_down,
+              size: 16,
+              color: isActive ? Colors.white : Colors.black54,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -530,7 +598,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
               padding: const EdgeInsets.all(15.0),
               child: Column(
                 children: [
-                  // Primera fila (Icono, Tituo y Flecha)
+                  // Primera fila (Icono, Titulo y Flecha)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

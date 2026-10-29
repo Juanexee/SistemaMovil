@@ -3,12 +3,13 @@ import '../../../core/di/injection.dart';
 import '../../../services/mesas_service.dart';
 import '../../../services/sesion_service.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/order_cart_manager.dart';
 import '../../../data/models/mesas_model.dart';
 import '../order/order_card_screen.dart';
 
 class TableManagementScreen extends StatefulWidget {
   // onTableTap recibe el mapa completo de la mesa seleccionada
-  final void Function(Map<String, dynamic> mesa)? onTableTap;
+  final Future<void> Function(Map<String, dynamic> mesa)? onTableTap;
   const TableManagementScreen({super.key, this.onTableTap});
 
   @override
@@ -40,7 +41,9 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
           final partes = meseroActual.split(' ');
           meseroIniciales = partes.length >= 2
               ? '${partes[0][0]}${partes[1][0]}'.toUpperCase()
-              : meseroActual.substring(0, meseroActual.length.clamp(0, 2)).toUpperCase();
+              : meseroActual
+                  .substring(0, meseroActual.length.clamp(0, 2))
+                  .toUpperCase();
         }
       } catch (_) {}
 
@@ -54,7 +57,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
             final status =
                 isLibre ? 'Libre' : (isOcupada ? 'Ocupada' : m.estado);
 
-            _tables.add({
+            final tableMap = <String, dynamic>{
               'id': m.id,
               'numero': m.numero,
               'name': 'Mesa ${m.numero.toString().padLeft(2, '0')}',
@@ -64,7 +67,11 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
               'waiterInitials': meseroIniciales,
               'waiterName': meseroActual,
               'type': status,
-            });
+            };
+            _tables.add(tableMap);
+          }
+          if (OrderCartManager().activeMesa == null && _tables.isNotEmpty) {
+            OrderCartManager().setActiveMesa(_tables.first, notify: false);
           }
           _isLoading = false;
         });
@@ -533,6 +540,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
         return GestureDetector(
           // Al tocar cualquier mesa, SIEMPRE se muestra la información de ESA mesa
           onTap: () {
+            OrderCartManager().setActiveMesa(table);
             _showTableDetail(context, table, statusColor, badgeBgColor);
           },
           child: Container(
@@ -849,6 +857,8 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                   final navigator = Navigator.of(context);
                   navigator.pop(); // Cierra el modal de detalle
 
+                  OrderCartManager().setActiveMesa(table);
+
                   final mesaId = table['id'] is int
                       ? table['id'] as int
                       : (int.tryParse(table['id']?.toString() ?? '') ?? 0);
@@ -861,13 +871,16 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                   }
 
                   if (widget.onTableTap != null) {
-                    widget.onTableTap!(table);
+                    await widget.onTableTap!(table);
                   } else {
-                    navigator.push(
+                    await navigator.push(
                       MaterialPageRoute(
                         builder: (context) => OrderCartScreen(mesa: table),
                       ),
                     );
+                  }
+                  if (mounted) {
+                    setState(() {});
                   }
                 },
                 child: Row(
@@ -900,33 +913,47 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.blue.shade700,
                           side: BorderSide(color: Colors.blue.shade300),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         icon: const Icon(Icons.payments_outlined, size: 16),
-                        label: const Text('Por cobrar', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                        label: const Text('Por cobrar',
+                            style: TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.bold)),
                         onPressed: () async {
                           Navigator.pop(context);
                           final mesaId = table['id'] is int
                               ? table['id'] as int
-                              : (int.tryParse(table['id']?.toString() ?? '') ?? 0);
+                              : (int.tryParse(table['id']?.toString() ?? '') ??
+                                  0);
                           final numMesa = table['numero'] is int
                               ? table['numero'] as int
-                              : (int.tryParse(table['numero']?.toString() ?? '') ?? 1);
+                              : (int.tryParse(
+                                      table['numero']?.toString() ?? '') ??
+                                  1);
                           final cap = table['capacidad'] is int
                               ? table['capacidad'] as int
-                              : (int.tryParse(table['capacidad']?.toString() ?? '') ?? 4);
+                              : (int.tryParse(
+                                      table['capacidad']?.toString() ?? '') ??
+                                  4);
 
                           try {
                             await sl<MesasService>().actualizar(
                               mesaId,
-                              MesaModel(id: mesaId, numero: numMesa, capacidad: cap, estado: 'Por cobrar'),
+                              MesaModel(
+                                  id: mesaId,
+                                  numero: numMesa,
+                                  capacidad: cap,
+                                  estado: 'Por cobrar'),
                             );
                           } catch (_) {}
-                          setState(() {
-                            table['status'] = 'Por cobrar';
-                            table['type'] = 'Por cobrar';
-                          });
+                          if (mounted) {
+                            setState(() {
+                              table['status'] = 'Por cobrar';
+                              table['type'] = 'Por cobrar';
+                            });
+                          }
                         },
                       ),
                     ),
@@ -936,34 +963,49 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.green.shade700,
                         side: BorderSide(color: Colors.green.shade300),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       icon: const Icon(Icons.check_circle_outline, size: 16),
-                      label: const Text('Liberar mesa', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                      label: const Text('Liberar mesa',
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.bold)),
                       onPressed: () async {
                         Navigator.pop(context);
                         final mesaId = table['id'] is int
                             ? table['id'] as int
-                            : (int.tryParse(table['id']?.toString() ?? '') ?? 0);
+                            : (int.tryParse(table['id']?.toString() ?? '') ??
+                                0);
                         final numMesa = table['numero'] is int
                             ? table['numero'] as int
-                            : (int.tryParse(table['numero']?.toString() ?? '') ?? 1);
+                            : (int.tryParse(
+                                    table['numero']?.toString() ?? '') ??
+                                1);
                         final cap = table['capacidad'] is int
                             ? table['capacidad'] as int
-                            : (int.tryParse(table['capacidad']?.toString() ?? '') ?? 4);
+                            : (int.tryParse(
+                                    table['capacidad']?.toString() ?? '') ??
+                                4);
 
                         try {
                           await sl<MesasService>().actualizar(
                             mesaId,
-                            MesaModel(id: mesaId, numero: numMesa, capacidad: cap, estado: 'Libre'),
+                            MesaModel(
+                                id: mesaId,
+                                numero: numMesa,
+                                capacidad: cap,
+                                estado: 'Libre'),
                           );
                         } catch (_) {}
-                        setState(() {
-                          table['status'] = 'Libre';
-                          table['type'] = 'Libre';
-                          table['detail'] = 'Capacidad: $cap personas';
-                        });
+                        OrderCartManager().clear(mesaId: mesaId);
+                        if (mounted) {
+                          setState(() {
+                            table['status'] = 'Libre';
+                            table['type'] = 'Libre';
+                            table['detail'] = 'Capacidad: $cap personas';
+                          });
+                        }
                       },
                     ),
                   ),

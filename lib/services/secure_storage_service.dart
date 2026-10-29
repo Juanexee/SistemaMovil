@@ -27,7 +27,7 @@ class SecureStorageService {
     await _storage.write(key: _keyToken, value: token);
   }
 
-  // Lee el token guardado â€” puede ser null si no hay sesion activa
+  // Lee el token guardado — puede ser null si no hay sesion activa
   Future<String?> getToken() async {
     return await _storage.read(key: _keyToken);
   }
@@ -38,7 +38,7 @@ class SecureStorageService {
   }
 
   // -------------------------------------------------------
-  // ROL DEL USUARIO (RBAC â€” RF-MOV-AUT-03)
+  // ROL DEL USUARIO (RBAC — RF-MOV-AUT-03)
   // Guardo el rol para controlar a que pantallas puede entrar
   // -------------------------------------------------------
 
@@ -106,10 +106,13 @@ class SecureStorageService {
   }
 
   // -------------------------------------------------------
-  // CERRAR SESION â€” Borra todo lo guardado
+  // CERRAR SESION — Borra los datos de sesion manteniendo preferencias
   // Cumple con RNF-MOV-SEG-03: destruye el estado al expirar
   // -------------------------------------------------------
   Future<void> clearAll() async {
-    await _storage.deleteAll();
+    await _storage.delete(key: _keyToken);
+    await _storage.delete(key: _keyRole);
+    await _storage.delete(key: _keyUserName);
+    await _storage.delete(key: _keyUserId);
   }
 }

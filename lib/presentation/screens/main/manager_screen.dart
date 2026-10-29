@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/user_provider.dart';
+import '../../providers/ventas_provider.dart';
+import '../../providers/inventario_provider.dart';
+import '../../providers/pedidos_provider.dart';
+import '../../../services/order_cart_manager.dart';
 
 import '../inventory/invenroty_screen.dart';
 import '../reports/sales_history_screen.dart';
@@ -50,7 +55,19 @@ class _ManagerScreenState extends State<ManagerScreen> {
             // Botón de cerrar sesión
             InkWell(
               onTap: () async {
-                await Provider.of<AuthProvider>(context, listen: false).logout();
+                final authProv = Provider.of<AuthProvider>(context, listen: false);
+                final userProv = Provider.of<UserProvider>(context, listen: false);
+                final ventasProv = Provider.of<VentasProvider>(context, listen: false);
+                final invProv = Provider.of<InventarioProvider>(context, listen: false);
+                final pedidosProv = Provider.of<PedidosProvider>(context, listen: false);
+
+                await authProv.logout();
+                userProv.clear();
+                ventasProv.clear();
+                invProv.clear();
+                pedidosProv.clear();
+                OrderCartManager().clearAll();
+
                 if (!context.mounted) return;
                 Navigator.pushAndRemoveUntil(
                   context,

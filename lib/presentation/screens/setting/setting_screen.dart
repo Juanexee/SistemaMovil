@@ -80,13 +80,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
- 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
- 
- 
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -94,145 +92,248 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // TOP BAR
-                Row(
-                  children: [
-                    Container(
-                      width: 35,
-                      height: 35,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2E221E),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'EL',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'El Rancho\nLa Mimi',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        height: 1.1,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    const Text(
-                      'En línea',
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
-                    ),
-                    const SizedBox(width: 15),
-                    const Icon(Icons.notifications_none, color: Colors.black87),
-                  ],
-                ),
- 
-                const SizedBox(height: 30),
- 
-                // TITULOS PRINCIPALES
-                const Text(
-                  'CONTROLES DE ESPACIO DE TRABAJO',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Ajustes',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.tune,
-                        color: Colors.black87,
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'Haz que el sistema funcione a tu manera',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                ),
- 
-                const SizedBox(height: 30),
- 
-                // SECCION 01: INVENTARIO
-                _buildSectionHeader(
-                  'PROTECCIÓN DE STOCK',
-                  'Alertas de inventario',
-                  '01',
-                ),
-                const SizedBox(height: 15),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // TOP BAR
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            width: 35,
+                            height: 35,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF5EBE6),
+                              color: const Color(0xFF2E221E),
                               borderRadius: BorderRadius.circular(8),
                             ),
+                            child: const Center(
+                              child: Text(
+                                'EL',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'El Rancho\nLa Mimi',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              height: 1.1,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          const Text(
+                            'En línea',
+                            style: TextStyle(color: Colors.grey, fontSize: 13),
+                          ),
+                          const SizedBox(width: 15),
+                          const Icon(Icons.notifications_none,
+                              color: Colors.black87),
+                        ],
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // TITULOS PRINCIPALES
+                      const Text(
+                        'CONTROLES DE ESPACIO DE TRABAJO',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Ajustes',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                             child: const Icon(
-                              Icons.inventory_2_outlined,
-                              color: Color(0xFF8A6D5C),
+                              Icons.tune,
+                              color: Colors.black87,
                               size: 20,
                             ),
                           ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Haz que el sistema funcione a tu manera',
+                        style:
+                            TextStyle(color: Colors.grey[600], fontSize: 14),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // SECCION 01: INVENTARIO
+                      _buildSectionHeader(
+                        'PROTECCIÓN DE STOCK',
+                        'Alertas de inventario',
+                        '01',
+                      ),
+                      const SizedBox(height: 15),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
                               children: [
-                                const Text(
-                                  'Umbrales mínimos de stock',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5EBE6),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.inventory_2_outlined,
+                                    color: Color(0xFF8A6D5C),
+                                    size: 20,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(width: 15),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Umbrales mínimos de stock',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Recibe notificaciones antes de que se agoten',
+                                        style: TextStyle(
+                                          color: Colors.grey[500],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '${valSlider.toInt()} unidades',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            // Usé un Slider normal, es lo mas parecido nativo sin meter librerias raras
+                            SliderTheme(
+                              data: SliderThemeData(
+                                activeTrackColor: const Color(0xFF8A6D5C),
+                                inactiveTrackColor: Colors.grey[200],
+                                thumbColor: Colors.white,
+                                trackHeight: 6.0,
+                              ),
+                              child: Slider(
+                                value: valSlider,
+                                min: 1,
+                                max: 30,
+                                onChanged: (value) {
+                                  setState(() {
+                                    valSlider = value;
+                                  });
+                                },
+                              ),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '1 unid.',
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                  Text(
+                                    '30 unids.',
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 15),
+                            const Divider(),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: Colors.red[400],
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Insumos ≤ ${valSlider.toInt()}',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 Text(
-                                  'Recibe notificaciones antes de que se agoten',
+                                  'Alerta de stock bajo',
                                   style: TextStyle(
                                     color: Colors.grey[500],
                                     fontSize: 12,
@@ -240,297 +341,202 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                               ],
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '${valSlider.toInt()} unidades',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 15),
-                      // Usé un Slider normal, es lo mas parecido nativo sin meter librerias raras
-                      SliderTheme(
-                        data: SliderThemeData(
-                          activeTrackColor: const Color(0xFF8A6D5C),
-                          inactiveTrackColor: Colors.grey[200],
-                          thumbColor: Colors.white,
-                          trackHeight: 6.0,
-                        ),
-                        child: Slider(
-                          value: valSlider,
-                          min: 1,
-                          max: 30,
-                          onChanged: (value) {
-                            setState(() {
-                              valSlider = value;
-                            });
-                          },
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '1 unid.',
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 11,
-                              ),
-                            ),
-                            Text(
-                              '30 unids.',
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 11,
-                              ),
-                            ),
                           ],
                         ),
                       ),
+
+                      const SizedBox(height: 30),
+
+                      // SECCION 02: NOTIFICACIONES
+                      _buildSectionHeader(
+                        'MANTENTE INFORMADO',
+                        'Notificaciones',
+                        '02',
+                      ),
                       const SizedBox(height: 15),
-                      const Divider(),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        // Envolvemos el Column en un Material transparente para arreglar el error del splash
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Column(
                             children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: Colors.red[400],
-                                  shape: BoxShape.circle,
+                              SwitchListTile(
+                                value: pushNoti,
+                                activeTrackColor: const Color(0xFF8A6D5C),
+                                title: const Text(
+                                  'Notificaciones Push',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
                                 ),
+                                subtitle: Text(
+                                  'Actualizaciones en tu dispositivo móvil',
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                secondary: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5EBE6),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.notifications_none,
+                                    color: Color(0xFF8A6D5C),
+                                    size: 20,
+                                  ),
+                                ),
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    pushNoti = value;
+                                  });
+                                },
                               ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Tomates < 10',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
+                              const Divider(height: 1),
+                              SwitchListTile(
+                                value: systemAlerts,
+                                activeTrackColor: const Color(0xFF8A6D5C),
+                                title: const Text(
+                                  'Alertas del sistema',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
                                 ),
+                                subtitle: Text(
+                                  'Eventos críticos de stock y auditoría',
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                secondary: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5EBE6),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.remove_red_eye_outlined,
+                                    color: Color(0xFF8A6D5C),
+                                    size: 20,
+                                  ),
+                                ),
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    systemAlerts = value;
+                                  });
+                                },
                               ),
                             ],
                           ),
-                          Text(
-                            'Alerta de stock bajo',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ],
-                  ),
-                ),
- 
-                const SizedBox(height: 30),
- 
-                // SECCION 02: NOTIFICACIONES
-                _buildSectionHeader(
-                  'MANTENTE INFORMADO',
-                  'Notificaciones',
-                  '02',
-                ),
-                const SizedBox(height: 15),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  // Envolvemos el Column en un Material transparente para arreglar el error del splash
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Column(
-                      children: [
-                        SwitchListTile(
-                          value: pushNoti,
-                          activeTrackColor: const Color(0xFF8A6D5C),
-                          title: const Text(
-                            'Notificaciones Push',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                          subtitle: Text(
-                            'Actualizaciones en tu dispositivo móvil',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                          ),
-                          secondary: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5EBE6),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.notifications_none,
-                              color: Color(0xFF8A6D5C),
-                              size: 20,
-                            ),
-                          ),
-                          onChanged: (bool value) {
-                            setState(() {
-                              pushNoti = value;
-                            });
-                          },
-                        ),
-                        const Divider(height: 1),
-                        SwitchListTile(
-                          value: systemAlerts,
-                          activeTrackColor: const Color(0xFF8A6D5C),
-                          title: const Text(
-                            'Alertas del sistema',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                          subtitle: Text(
-                            'Eventos críticos de stock y auditoría',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                          ),
-                          secondary: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5EBE6),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.remove_red_eye_outlined,
-                              color: Color(0xFF8A6D5C),
-                              size: 20,
-                            ),
-                          ),
-                          onChanged: (bool value) {
-                            setState(() {
-                              systemAlerts = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
- 
-                // SECCION 03: PREFERENCIAS
-                _buildSectionHeader(
-                  'PREFERENCIAS REGIONALES',
-                  'Parámetros generales',
-                  '03',
-                ),
-                const SizedBox(height: 15),
-                const Text(
-                  'Moneda predeterminada',
-                  style: TextStyle(fontSize: 13, color: Colors.black87),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 15,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                      const SizedBox(height: 30),
+
+                      // SECCION 03: PREFERENCIAS
+                      _buildSectionHeader(
+                        'PREFERENCIAS REGIONALES',
+                        'Parámetros generales',
+                        '03',
+                      ),
+                      const SizedBox(height: 15),
                       const Text(
-                        'NIO - Córdoba Nicaragüense',
-                        style: TextStyle(fontSize: 15),
+                        'Moneda predeterminada',
+                        style: TextStyle(fontSize: 13, color: Colors.black87),
                       ),
-                      Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 15,
+                          vertical: 15,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'NIO - Córdoba Nicaragüense',
+                              style: TextStyle(fontSize: 15),
+                            ),
+                            Icon(Icons.keyboard_arrow_down,
+                                color: Colors.grey[600]),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Usado para ventas, facturas y reportes.',
+                        style:
+                            TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+
+                      const SizedBox(height: 40),
+
+                      // BOTON GUARDAR (Lo puse al final del scroll para que sea mas facil de maquetar)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2E221E),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: _isSaving ? null : _guardarPreferencias,
+                          child: _isSaving
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(
+                                      Icons.save_outlined,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Guardar preferencias',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Usado para ventas, facturas y reportes.',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                ),
- 
-                const SizedBox(height: 40),
- 
-                // BOTON GUARDAR (Lo puse al final del scroll para que sea mas facil de maquetar)
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E221E),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: _isSaving ? null : _guardarPreferencias,
-                    child: _isSaving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(
-                                Icons.save_outlined,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Guardar preferencias',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                  ),
-                ),
- 
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }
- 
+
   // Metodo para los subtitulos de cada bloque
   Widget _buildSectionHeader(String overline, String title, String number) {
     return Row(
@@ -567,6 +573,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ],
     );
   }
- 
-
 }

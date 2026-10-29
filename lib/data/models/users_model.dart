@@ -22,14 +22,39 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    final rId = json['rolID'] ?? json['rolId'] ?? json['idRol'];
+    final rawRolId = json['rolID'] ?? json['rolId'] ?? json['idRol'];
+    final int? parsedRolId = rawRolId is int
+        ? rawRolId
+        : (rawRolId != null ? int.tryParse(rawRolId.toString()) : null);
     final act = json['activo'] ?? json['status'] ?? json['isActivo'] ?? true;
+
+    String? roleFromId(int? id) {
+      switch (id) {
+        case 1:
+          return 'Administrador';
+        case 2:
+          return 'Mesero';
+        case 3:
+          return 'Gerente';
+        case 4:
+          return 'Cajero';
+        default:
+          return id != null ? 'Rol $id' : null;
+      }
+    }
+
+    final rawRole = json['rolNombre'] ??
+        json['nombreRol'] ??
+        json['role'] ??
+        roleFromId(parsedRolId) ??
+        '';
+
     return UserModel(
       id:       json['usuarioID']     ?? json['id'] ?? 0,
       name:     json['nombre']        ?? json['nombreCompleto'] ?? json['name'] ?? '',
       email:    json['nombreUsuario'] ?? json['email'] ?? json['usuario'] ?? '',
-      role:     json['rolNombre']     ?? json['nombreRol'] ?? (rId != null ? 'Rol $rId' : '') ?? json['role'] ?? '',
-      rolId:    rId is int ? rId : (rId != null ? int.tryParse(rId.toString()) : null),
+      role:     rawRole.toString(),
+      rolId:    parsedRolId,
       activo:   act is bool ? act : (act.toString().toLowerCase() == 'true' || act == 1),
     );
   }

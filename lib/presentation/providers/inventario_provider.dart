@@ -3,8 +3,10 @@
 // Gestiona el estado del inventario y las alertas de stock
 // =========================================================
 import 'package:flutter/material.dart';
+import '../../core/di/injection.dart';
 import '../../services/inventario_service.dart';
 import '../../services/insumos_service.dart';
+import '../../services/secure_storage_service.dart';
 import '../../data/models/inventario_model.dart';
 
 class InventarioProvider extends ChangeNotifier {
@@ -33,6 +35,12 @@ class InventarioProvider extends ChangeNotifier {
     bool resumenOk = false;
     bool alertasOk = false;
 
+    double umbralPreferencia = 10.0;
+    try {
+      final prefs = await sl<SecureStorageService>().getSettings();
+      umbralPreferencia = (prefs['stockMinimo'] as num?)?.toDouble() ?? 10.0;
+    } catch (_) {}
+
     // 1. Intentamos obtener resumen y alertas del endpoint de InventarioMovil
     try {
       _resumen = await _inventarioService.getResumen();
@@ -56,12 +64,17 @@ class InventarioProvider extends ChangeNotifier {
             (sum, item) => sum + (item.stock * item.precioUnitario),
           );
           final alertasCalculadas = insumos
-              .where((i) => i.stock <= i.stockMinimo)
+              .where((i) {
+                final minEfectivo =
+                    i.stockMinimo > 0 ? i.stockMinimo : umbralPreferencia;
+                return i.stock <= minEfectivo;
+              })
               .map((i) => AlertaStockModel(
                     id: i.id,
                     nombre: i.nombre,
                     stockActual: i.stock,
-                    stockMinimo: i.stockMinimo,
+                    stockMinimo:
+                        i.stockMinimo > 0 ? i.stockMinimo : umbralPreferencia,
                     unidadMedida: i.unidadMedidaNombre ?? 'Unidades',
                   ))
               .toList();
