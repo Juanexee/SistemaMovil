@@ -5,6 +5,7 @@ import '../../providers/user_provider.dart';
 import '../../providers/ventas_provider.dart';
 import '../../providers/inventario_provider.dart';
 import '../../providers/pedidos_provider.dart';
+import '../../providers/metrics_provider.dart';
 import '../../../services/order_cart_manager.dart';
 
 import '../inventory/invenroty_screen.dart';
@@ -22,15 +23,15 @@ class ManagerScreen extends StatefulWidget {
 }
 
 class _ManagerScreenState extends State<ManagerScreen> {
-  // Empezamos en 0: Inicio (auditoría)
+  // Empezamos en 0: Inicio (auditoría y métricas)
   int _currentIndex = 0;
 
   // Pantallas del gerente: 0=Inicio, 1=Inventario, 2=Reportes, 3=Usuarios, 4=Ajustes
   final List<Widget> _screens = [
-    const AuditLogsScreen(),         // 0 - Inicio
+    const AuditLogsScreen(),         // 0 - Inicio (Auditoría + Métricas)
     const InventoryScreen(),          // 1 - Inventario
     const SalesHistoryScreen(),       // 2 - Reportes
-    const UserManagementScreen(),     // 3 - Usuarios (¡nuevo!)
+    const UserManagementScreen(),     // 3 - Usuarios
     const SettingsScreen(),           // 4 - Ajustes
   ];
 
@@ -60,12 +61,14 @@ class _ManagerScreenState extends State<ManagerScreen> {
                 final ventasProv = Provider.of<VentasProvider>(context, listen: false);
                 final invProv = Provider.of<InventarioProvider>(context, listen: false);
                 final pedidosProv = Provider.of<PedidosProvider>(context, listen: false);
+                final metricsProv = Provider.of<MetricsProvider>(context, listen: false);
 
                 await authProv.logout();
                 userProv.clear();
                 ventasProv.clear();
                 invProv.clear();
                 pedidosProv.clear();
+                metricsProv.clear();
                 OrderCartManager().clearAll();
 
                 if (!context.mounted) return;

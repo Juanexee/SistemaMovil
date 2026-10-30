@@ -16,6 +16,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/dashboard_repository.dart';
 import '../../data/repositories/inventario_repository.dart';
 import '../../data/repositories/auditoria_repository.dart';
+import '../../data/repositories/metrics_repository.dart';
 import '../../data/repositories/categoria_repository.dart';
 import '../../data/repositories/compras_repository.dart';
 import '../../data/repositories/insumos_repository.dart';
@@ -34,6 +35,7 @@ import '../../services/auth_service.dart';
 import '../../services/dashboard_service.dart';
 import '../../services/inventario_service.dart';
 import '../../services/auditoria_service.dart';
+import '../../services/metrics_service.dart';
 import '../../services/categoria_service.dart';
 import '../../services/compras_service.dart';
 import '../../services/insumos_service.dart';
@@ -53,6 +55,7 @@ import '../../presentation/providers/auth_provider.dart';
 import '../../presentation/providers/ventas_provider.dart';
 import '../../presentation/providers/pedidos_provider.dart';
 import '../../presentation/providers/inventario_provider.dart';
+import '../../presentation/providers/metrics_provider.dart';
 
 // Instancia global del Service Locator
 // Uso: sl<UserService>() desde cualquier parte del codigo
@@ -63,7 +66,7 @@ void setupDependencies() {
   // NIVEL 1: Servicios sin dependencias (los mas basicos)
   // -------------------------------------------------------
 
-  // Almacenamiento seguro del JWT â€” RNF-MOV-SEG-02
+  // Almacenamiento seguro del JWT — RNF-MOV-SEG-02
   sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
 
   // -------------------------------------------------------
@@ -92,6 +95,9 @@ void setupDependencies() {
   );
   sl.registerLazySingleton<AuditoriaRepository>(
     () => AuditoriaRepository(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<MetricsRepository>(
+    () => MetricsRepository(sl<ApiClient>()),
   );
   sl.registerLazySingleton<CategoriaRepository>(
     () => CategoriaRepository(sl<ApiClient>()),
@@ -145,6 +151,9 @@ void setupDependencies() {
   sl.registerLazySingleton<AuditoriaService>(
     () => AuditoriaService(sl<AuditoriaRepository>()),
   );
+  sl.registerLazySingleton<MetricsService>(
+    () => MetricsService(sl<MetricsRepository>()),
+  );
   sl.registerLazySingleton<CategoriaService>(
     () => CategoriaService(sl<CategoriaRepository>()),
   );
@@ -197,5 +206,9 @@ void setupDependencies() {
 
   sl.registerFactory<InventarioProvider>(
     () => InventarioProvider(sl<InventarioService>(), sl<InsumosService>()),
+  );
+
+  sl.registerFactory<MetricsProvider>(
+    () => MetricsProvider(sl<MetricsService>()),
   );
 }

@@ -16,6 +16,7 @@ import 'presentation/providers/user_provider.dart';
 import 'presentation/providers/ventas_provider.dart';
 import 'presentation/providers/inventario_provider.dart';
 import 'presentation/providers/pedidos_provider.dart';
+import 'presentation/providers/metrics_provider.dart';
 
 // Importamos la pantalla inicial (Login)
 import 'presentation/screens/login/login_screen.dart';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => sl<VentasProvider>()),
         ChangeNotifierProvider(create: (_) => sl<InventarioProvider>()),
         ChangeNotifierProvider(create: (_) => sl<PedidosProvider>()),
+        ChangeNotifierProvider(create: (_) => sl<MetricsProvider>()),
       ],
       child: MaterialApp(
         title: 'El Rancho La Mimí',

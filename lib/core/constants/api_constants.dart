@@ -1,14 +1,19 @@
-﻿// =========================================================
+// =========================================================
 // api_constants.dart
 // URLs y rutas de la API leídas desde .env
 // =========================================================
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiConstants {
-  // Lee la URL base dinámicamente desde el archivo .env
-  static String get baseUrl =>
-      dotenv.env['API_URL'] ??
-      'https://pos320261015135238-eqcwenbwb7a4hgbr.centralus-01.azurewebsites.net';
+  // Lee la URL base dinámicamente desde el archivo .env y limpia sufijos de swagger
+  static String get baseUrl {
+    final raw = (dotenv.env['API_URL'] ??
+            'https://pos3-api-real2026-h2cpa0gsfjbbf6ea.westus-01.azurewebsites.net')
+        .trim();
+    return raw
+        .replaceAll(RegExp(r'/swagger(/index\.html)?/?$', caseSensitive: false), '')
+        .replaceAll(RegExp(r'/+$'), '');
+  }
 
   // -------------------------------------------------------
   // AUTH — RF-MOV-AUT-01 y RF-MOV-AUT-02
@@ -32,6 +37,13 @@ class ApiConstants {
   // -------------------------------------------------------
   static const String auditoriaLogs = '/api/Auditoria/logs';
   static const String auditoriaRegistrar = '/api/Auditoria/registrar';
+
+  // -------------------------------------------------------
+  // METRICS — Rendimiento de la API y Memoria/CPU (MongoDB)
+  // -------------------------------------------------------
+  static const String metricsApiUsage = '/api/Metrics/api-usage';
+  static const String metricsMemory = '/api/Metrics/memory';
+  static const String metricsSummary = '/api/Metrics/summary';
 
   // -------------------------------------------------------
   // CATEGORIA

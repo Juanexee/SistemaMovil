@@ -5,6 +5,7 @@ import '../../providers/user_provider.dart';
 import '../../providers/ventas_provider.dart';
 import '../../providers/inventario_provider.dart';
 import '../../providers/pedidos_provider.dart';
+import '../../providers/metrics_provider.dart';
 import '../../../services/order_cart_manager.dart';
 
 import '../table/table_screen.dart';
@@ -63,12 +64,14 @@ class _WaiterScreenState extends State<WaiterScreen> {
                 final ventasProv = Provider.of<VentasProvider>(context, listen: false);
                 final invProv = Provider.of<InventarioProvider>(context, listen: false);
                 final pedidosProv = Provider.of<PedidosProvider>(context, listen: false);
+                final metricsProv = Provider.of<MetricsProvider>(context, listen: false);
 
                 await authProv.logout();
                 userProv.clear();
                 ventasProv.clear();
                 invProv.clear();
                 pedidosProv.clear();
+                metricsProv.clear();
                 OrderCartManager().clearAll();
 
                 if (!context.mounted) return;
