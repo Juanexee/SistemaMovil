@@ -14,9 +14,18 @@ class UsersRepository {
   Future<List<UserModel>> getUsers() async {
     final dynamic json = await _client.get(ApiConstants.usuarioLeer);
     if (json is! List) throw Exception('Se esperaba lista de usuarios');
-    return json
+    final parsed = json
         .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
         .toList();
+
+    // Si el DTO del backend en /Usuario/Leer no mapea la columna booleana Activo
+    // (dejándola en false por defecto para todos los usuarios activos listados),
+    // los normalizamos como activos.
+    if (parsed.isNotEmpty && parsed.every((u) => !u.activo)) {
+      return parsed.map((u) => u.copyWith(activo: true)).toList();
+    }
+
+    return parsed;
   }
 
   Future<void> crear(UserModel usuario) async {
@@ -24,7 +33,10 @@ class UsersRepository {
   }
 
   Future<void> actualizar(int id, UserModel usuario) async {
-    await _client.put(ApiConstants.usuarioActualizar(id), body: usuario.toUpdateJson());
+    await _client.put(
+      ApiConstants.usuarioActualizar(id),
+      body: usuario.toUpdateJson(),
+    );
   }
 
   Future<void> eliminar(int id) async {

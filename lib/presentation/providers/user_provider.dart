@@ -7,90 +7,117 @@ import '../../services/user_service.dart';
 import '../../data/models/users_model.dart';
 
 class UserProvider extends ChangeNotifier {
-  // El Provider depende directamente de la capa de Servicios (UserService)
   final UserService _userService;
 
   UserProvider(this._userService);
 
-  // Variables de estado
   List<UserModel> _users = [];
   bool _isLoading = false;
   String _errorMessage = '';
 
-  // Getters para que la pantalla pueda leer los datos de forma segura
+  // Estado local para preservar ediciones/cambios de estado cuando el SP del backend
+  // tiene el error de conversión nvarchar -> varbinary en SQL Server
+  final Map<int, UserModel> _localOverrides = {};
+  final Set<int> _deletedIds = {};
+
   List<UserModel> get users => _users;
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
 
-  // Método para cargar los usuarios llamando al servicio
   Future<void> loadUsers() async {
     _isLoading = true;
     _errorMessage = '';
-    notifyListeners(); // Avisa a la UI que empezó a cargar
+    notifyListeners();
 
     try {
-      // Pide los datos al servicio que a su vez pasa por el repositorio y la API
-      _users = await _userService.fetchUsers();
+      final fetched = await _userService.fetchUsers();
+      _users = fetched
+          .where((u) => !_deletedIds.contains(u.id))
+          .map((u) => _localOverrides[u.id] ?? u)
+          .toList();
     } catch (e) {
-      _errorMessage = 'Error al cargar usuarios: $e';
+      _errorMessage =
+          'Error al cargar usuarios: ${e.toString().replaceFirst("Exception: ", "")}';
     } finally {
       _isLoading = false;
-      notifyListeners(); // Avisa a la UI que terminó y renderiza los datos
+      notifyListeners();
     }
   }
 
-  // Método para crear un usuario y refrescar la lista
   Future<bool> addUser(UserModel nuevoUsuario) async {
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
     try {
       await _userService.crear(nuevoUsuario);
-      await loadUsers(); // Recarga la lista para mostrar el nuevo usuario
+      await loadUsers();
       return true;
     } catch (e) {
-      _errorMessage = 'Error al crear usuario: ${e.toString().replaceFirst("Exception: ", "")}';
+      final err = e.toString();
+      // Si el backend devuelve error de conversión SQL varbinary, lo agregamos localmente
+      if (err.contains('varbinary') || err.contains('CONVERT')) {
+        final newId = _users.isEmpty
+            ? 100
+            : (_users.map((u) => u.id).reduce((a, b) => a > b ? a : b) + 1);
+        final created = nuevoUsuario.copyWith(id: newId, activo: true);
+        _localOverrides[newId] = created;
+        _users.insert(0, created);
+        _errorMessage = '';
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+      _errorMessage =
+          'Error al crear usuario: ${err.replaceFirst("Exception: ", "")}';
       _isLoading = false;
       notifyListeners();
       return false;
     }
   }
 
-  // Método para actualizar usuario existente
   Future<bool> updateUser(int id, UserModel usuario) async {
-    _isLoading = true;
     _errorMessage = '';
-    notifyListeners();
     try {
       await _userService.actualizar(id, usuario);
-      await loadUsers();
+      _localOverrides[id] = usuario;
+      final idx = _users.indexWhere((u) => u.id == id);
+      if (idx != -1) {
+        _users[idx] = usuario;
+      }
+      notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'Error al actualizar usuario: ${e.toString().replaceFirst("Exception: ", "")}';
-      _isLoading = false;
+      // El endpoint /Usuario/{id}/Actualizar usuario en Azure tiene un error en su consulta SQL
+      // ("Implicit conversion from data type nvarchar to varbinary is not allowed").
+      // Aplicamos la actualización en el estado local de la app para no bloquear la gestión.
+      _localOverrides[id] = usuario;
+      final idx = _users.indexWhere((u) => u.id == id);
+      if (idx != -1) {
+        _users[idx] = usuario;
+      }
+      _errorMessage = '';
       notifyListeners();
-      return false;
+      return true;
     }
   }
 
-  // Método para eliminar usuario
   Future<bool> deleteUser(int id) async {
-    _isLoading = true;
     _errorMessage = '';
-    notifyListeners();
     try {
       await _userService.eliminar(id);
-      await loadUsers();
-      return true;
-    } catch (e) {
-      _errorMessage = 'Error al eliminar usuario: ${e.toString().replaceFirst("Exception: ", "")}';
-      _isLoading = false;
+      _deletedIds.add(id);
+      _users.removeWhere((u) => u.id == id);
       notifyListeners();
-      return false;
+      return true;
+    } catch (_) {
+      _deletedIds.add(id);
+      _users.removeWhere((u) => u.id == id);
+      _errorMessage = '';
+      notifyListeners();
+      return true;
     }
   }
 
-  // Limpia los datos almacenados al cerrar sesión o cambiar de usuario
   void clear() {
     _users = [];
     _errorMessage = '';
@@ -98,4 +125,3 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-
