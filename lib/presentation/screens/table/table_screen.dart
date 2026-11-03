@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/di/injection.dart';
+import '../../../core/utils/number_formatter.dart';
 import '../../../services/mesas_service.dart';
 import '../../../services/sesion_service.dart';
 import '../../../services/auth_service.dart';
@@ -561,7 +562,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
         }
 
         final String detailText = dishCount > 0
-            ? '$dishCount platillo${dishCount == 1 ? '' : 's'} (C\$ ${dishSub.toStringAsFixed(0)}): ${dishes.map((d) => "${d['quantity']}x ${d['title']}").join(", ")}'
+            ? '$dishCount platillo${dishCount == 1 ? '' : 's'} (${NumberFormatter.currency(dishSub)}): ${dishes.map((d) => "${d['quantity']}x ${d['title']}").join(", ")}'
             : (table['detail'] ?? 'Capacidad: ${table['capacidad'] ?? 4} personas');
 
         return GestureDetector(
@@ -847,7 +848,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                       ),
                       if (mesaDishes.isNotEmpty)
                         Text(
-                          'Subtotal: C\$ ${mesaSubtotal.toStringAsFixed(2)}',
+                          'Subtotal: ${NumberFormatter.currency(mesaSubtotal)}',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -954,7 +955,7 @@ class _TableManagementScreenState extends State<TableManagementScreen> {
                                 ),
                               ),
                               Text(
-                                'C\$ ${totalLine.toStringAsFixed(2)}',
+                                NumberFormatter.currency(totalLine),
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,

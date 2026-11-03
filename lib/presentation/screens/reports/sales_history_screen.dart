@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/utils/number_formatter.dart';
 import '../../../presentation/providers/ventas_provider.dart';
 import '../../../data/models/ventas_model.dart';
 import '../../widgets/pagination_controls.dart';
@@ -404,7 +405,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                     fit: BoxFit.scaleDown,
                                     alignment: Alignment.centerLeft,
                                     child: Text(
-                                      'C\$ ${totalHoy.toStringAsFixed(2)}',
+                                      NumberFormatter.currency(totalHoy),
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 26,
@@ -423,7 +424,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                       const SizedBox(width: 5),
                                       Expanded(
                                         child: Text(
-                                          '$countHoy transacciones registradas',
+                                          '${NumberFormatter.integer(countHoy)} transacciones registradas',
                                           style: TextStyle(
                                             color: Colors.grey[300],
                                             fontSize: 12,
@@ -460,7 +461,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                   ),
                                   const SizedBox(height: 10),
                                   Text(
-                                    '$countHoy',
+                                    NumberFormatter.integer(countHoy),
                                     style: const TextStyle(
                                       color: Colors.black87,
                                       fontSize: 26,
@@ -469,7 +470,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                   ),
                                   const SizedBox(height: 15),
                                   Text(
-                                    '${filtered.length} coinciden con la búsqueda',
+                                    '${NumberFormatter.integer(filtered.length)} coinciden con la búsqueda',
                                     style: TextStyle(
                                       color: Colors.grey[500],
                                       fontSize: 12,
@@ -503,7 +504,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Total: C\$ ${filtered.where((v) => !v.estado.toLowerCase().contains('cancel')).fold<double>(0, (s, v) => s + v.total).toStringAsFixed(2)}',
+                            'Total: ${NumberFormatter.currency(filtered.where((v) => !v.estado.toLowerCase().contains('cancel')).fold<double>(0, (s, v) => s + v.total))}',
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 12,
@@ -673,7 +674,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'C\$ ${venta.total.toStringAsFixed(2)}',
+                NumberFormatter.currency(venta.total),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,

@@ -126,6 +126,9 @@ class InventarioProvider extends ChangeNotifier {
     ),
   ];
 
+  // Alias de compatibilidad para recargar todo el inventario
+  Future<void> cargarTodo() => loadInventarioData();
+
   // Método para cargar resumen, alertas reales y catálogo de insumos desde la API
   Future<void> loadInventarioData() async {
     _isLoading = true;

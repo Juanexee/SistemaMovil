@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/utils/number_formatter.dart';
 import '../../../presentation/providers/inventario_provider.dart';
 import '../../../data/models/inventario_model.dart';
 
@@ -237,11 +238,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                     alignment: Alignment.centerLeft,
                                     child: Text(
                                       resumen != null
-                                          ? 'C\$ ${resumen.valoracionTotal.toStringAsFixed(0)}'
+                                          ? NumberFormatter.currency(
+                                              resumen.valoracionTotal,
+                                              decimals: 2,
+                                            )
                                           : 'C\$ —',
                                       style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 34,
+                                        fontSize: 30,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -300,7 +304,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                   ),
                                   Text(
                                     resumen != null
-                                        ? '${resumen.totalInsumos}'
+                                        ? NumberFormatter.integer(
+                                            resumen.totalInsumos)
                                         : '—',
                                     style: const TextStyle(
                                       color: Colors.black87,
@@ -534,7 +539,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Mínimo: ${alerta.stockMinimo.toStringAsFixed(1)} ${alerta.unidadMedida}${valorLinea > 0 ? " • C\$ ${valorLinea.toStringAsFixed(0)}" : ""}',
+                  'Mínimo: ${NumberFormatter.format(alerta.stockMinimo, decimals: 1)} ${alerta.unidadMedida}${valorLinea > 0 ? " • ${NumberFormatter.currency(valorLinea, decimals: 2)}" : ""}',
                   style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
               ],
@@ -544,7 +549,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${alerta.stockActual.toStringAsFixed(1)} ${alerta.unidadMedida}',
+                '${NumberFormatter.format(alerta.stockActual, decimals: 1)} ${alerta.unidadMedida}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/di/injection.dart';
+import '../../../core/utils/number_formatter.dart';
 import '../../../services/platillo_service.dart';
 import '../../../services/categoria_service.dart';
 import '../../../services/mesas_service.dart';
@@ -70,7 +71,7 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
             'status': count > 0 ? 'Ocupada' : status,
             'capacidad': m.capacidad,
             'detail': count > 0
-                ? '$count platillo${count == 1 ? '' : 's'} • C\$ ${sub.toStringAsFixed(2)}'
+                ? '$count platillo${count == 1 ? '' : 's'} • ${NumberFormatter.currency(sub)}'
                 : 'Capacidad: ${m.capacidad} personas',
             'waiterInitials': 'MR',
             'waiterName': 'Mesero',
@@ -121,7 +122,7 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                 'description': p.descripcion.isNotEmpty
                     ? p.descripcion
                     : 'Delicioso platillo tradicional',
-                'price': 'C\$ ${p.precio.toStringAsFixed(2)}',
+                'price': NumberFormatter.currency(p.precio),
                 'rawPrice': p.precio.toString(),
                 'imageUrl': p.imagenUrl ?? '',
                 'image': 'assets/images/Carne Asada.jpg',
@@ -397,7 +398,7 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                     ),
                     Text(
                       count > 0
-                          ? '$count platillo${count == 1 ? '' : 's'} en esta mesa • C\$ ${sub.toStringAsFixed(2)}'
+                          ? '$count platillo${count == 1 ? '' : 's'} en esta mesa • ${NumberFormatter.currency(sub)}'
                           : 'Toca + en cualquier platillo para elegir la mesa destino',
                       style: TextStyle(
                         fontSize: 11,
@@ -780,7 +781,7 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'C\$ ${price.toStringAsFixed(2)} c/u',
+                                  '${NumberFormatter.currency(price)} c/u',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -1005,7 +1006,7 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                           icon: const Icon(Icons.add_task_rounded,
                               color: Colors.white, size: 20),
                           label: Text(
-                            'Agregar a $mesaNombre • C\$ ${totalItem.toStringAsFixed(2)}',
+                            'Agregar a $mesaNombre • ${NumberFormatter.currency(totalItem)}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 15,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/di/injection.dart';
+import '../../../core/utils/number_formatter.dart';
 import '../../../services/auditoria_service.dart';
 import '../../../services/dashboard_service.dart';
 import '../../../services/ventas_service.dart';
@@ -459,7 +460,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      '${_logs.length}',
+                      NumberFormatter.integer(_logs.length),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 36,
@@ -518,7 +519,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'C\$ ${_kpis != null ? _kpis!.ventasDelDia.toStringAsFixed(2) : "0.00"}',
+                        NumberFormatter.currency(_kpis?.ventasDelDia ?? 0),
                         style: const TextStyle(
                           color: Colors.black87,
                           fontSize: 22,
@@ -537,7 +538,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            'Ticket: C\$ ${_kpis != null ? _kpis!.ticketPromedio.toStringAsFixed(2) : "0.00"}',
+                            'Ticket: ${NumberFormatter.currency(_kpis?.ticketPromedio ?? 0)}',
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 11,
@@ -850,7 +851,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              '${avgMs.toStringAsFixed(1)} ms',
+                              '${NumberFormatter.format(avgMs, decimals: 1)} ms',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 28,
@@ -860,7 +861,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            '$totalReqs peticiones • ${errRate.toStringAsFixed(1)}% error',
+                            '${NumberFormatter.integer(totalReqs)} peticiones • ${errRate.toStringAsFixed(1)}% error',
                             style: TextStyle(
                               color: Colors.grey[300],
                               fontSize: 11,
@@ -908,7 +909,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              '${currentRam.toStringAsFixed(1)} MB',
+                              '${NumberFormatter.format(currentRam, decimals: 1)} MB',
                               style: const TextStyle(
                                 color: Colors.black87,
                                 fontSize: 26,
@@ -918,7 +919,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'CPU: ${currentCpu.toStringAsFixed(1)}% • ${allMemLogs.length} muestras',
+                            'CPU: ${currentCpu.toStringAsFixed(1)}% • ${NumberFormatter.integer(allMemLogs.length)} muestras',
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 11,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/di/injection.dart';
+import '../../../core/utils/number_formatter.dart';
 import '../../../services/order_cart_manager.dart';
 import '../../../services/mesas_service.dart';
 import '../../../data/models/mesas_model.dart';
@@ -551,7 +552,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                     ),
                   ),
                   Text(
-                    'C\$ ${itemTotal.toStringAsFixed(2)}',
+                    NumberFormatter.currency(itemTotal),
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -594,7 +595,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                 style: TextStyle(fontSize: 13, color: Colors.grey),
               ),
               Text(
-                'C\$ ${subtotal.toStringAsFixed(2)}',
+                NumberFormatter.currency(subtotal),
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -612,7 +613,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                 style: TextStyle(fontSize: 13, color: Colors.grey),
               ),
               Text(
-                'C\$ ${tax.toStringAsFixed(2)}',
+                NumberFormatter.currency(tax),
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -637,7 +638,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                 ),
               ),
               Text(
-                'C\$ ${totalGeneral.toStringAsFixed(2)}',
+                NumberFormatter.currency(totalGeneral),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

@@ -54,7 +54,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) {
         // Recargamos el inventario para aplicar el nuevo umbral mínimo inmediatamente
         try {
-          Provider.of<InventarioProvider>(context, listen: false).cargarTodo();
+          Provider.of<InventarioProvider>(context, listen: false)
+              .loadInventarioData();
         } catch (_) {}
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).clearSnackBars();
