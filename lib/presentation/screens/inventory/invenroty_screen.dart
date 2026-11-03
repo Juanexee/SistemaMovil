@@ -13,11 +13,11 @@ class InventoryScreen extends StatefulWidget {
 class _InventoryScreenState extends State<InventoryScreen> {
   final TextEditingController search_ctrl = TextEditingController();
   String _searchQuery = '';
+  bool _mostrarSoloAlertas = false; // false = Todos los insumos (62), true = Solo en alerta
 
   @override
   void initState() {
     super.initState();
-    // Cargamos el inventario al abrir la pantalla
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<InventarioProvider>(context, listen: false)
           .loadInventarioData();
@@ -42,11 +42,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
           builder: (context, provider, _) {
             final resumen = provider.resumen;
             final alertas = provider.alertas;
+            final catalogo = provider.catalogoInsumos;
 
-            // Filtramos alertas según búsqueda
-            final filteredAlertas = _searchQuery.isEmpty
-                ? alertas
-                : alertas
+            final sourceList = _mostrarSoloAlertas ? alertas : catalogo;
+
+            final filteredList = _searchQuery.isEmpty
+                ? sourceList
+                : sourceList
                     .where(
                         (a) => a.nombre.toLowerCase().contains(_searchQuery))
                     .toList();
@@ -120,7 +122,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                        // Botón de actualizar
                         InkWell(
                           onTap: () => provider.loadInventarioData(),
                           borderRadius: BorderRadius.circular(10),
@@ -177,7 +178,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         ),
                       )
                     else ...[
-                      // ERROR
                       if (provider.errorMessage.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
@@ -207,7 +207,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           ),
                         ),
 
-                      // TARJETAS DE RESUMEN
+                      // TARJETAS DE RESUMEN SINCRONIZADAS
                       Row(
                         children: [
                           // Tarjeta oscura – Valor total
@@ -232,14 +232,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                       fontSize: 14,
                                     ),
                                   ),
-                                  Text(
-                                    resumen != null
-                                        ? 'C\$ ${resumen.valoracionTotal.toStringAsFixed(0)}'
-                                        : 'C\$ —',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.bold,
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      resumen != null
+                                          ? 'C\$ ${resumen.valoracionTotal.toStringAsFixed(0)}'
+                                          : 'C\$ —',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 34,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                   Row(
@@ -309,7 +313,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                     style: TextStyle(
                                       color: alertas.isNotEmpty
                                           ? Colors.red[500]
-                                          : Colors.grey[500],
+                                          : Colors.green[700],
+                                      fontWeight: FontWeight.w600,
                                       fontSize: 11,
                                     ),
                                   ),
@@ -320,15 +325,94 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 24),
+
+                      // SELECTOR DE VISTA: TODOS LOS INSUMOS vs EN ALERTA CRÍTICA
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () =>
+                                  setState(() => _mostrarSoloAlertas = false),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: !_mostrarSoloAlertas
+                                      ? const Color(0xFF38231c)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: !_mostrarSoloAlertas
+                                        ? const Color(0xFF38231c)
+                                        : Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Catálogo en stock (${catalogo.length})',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: !_mostrarSoloAlertas
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () =>
+                                  setState(() => _mostrarSoloAlertas = true),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: _mostrarSoloAlertas
+                                      ? const Color(0xFF38231c)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _mostrarSoloAlertas
+                                        ? const Color(0xFF38231c)
+                                        : Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Alertas críticas (${alertas.length})',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: _mostrarSoloAlertas
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 22),
 
                       // HEADER DE LA LISTA
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'ALERTAS DE STOCK BAJO',
-                            style: TextStyle(
+                          Text(
+                            _mostrarSoloAlertas
+                                ? 'ALERTAS DE STOCK BAJO'
+                                : 'CATÁLOGO GENERAL DE INSUMOS',
+                            style: const TextStyle(
                               color: Colors.grey,
                               fontSize: 12,
                               letterSpacing: 1.2,
@@ -336,23 +420,25 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             ),
                           ),
                           Text(
-                            '${filteredAlertas.length} ítems',
+                            '${filteredList.length} ítems',
                             style: TextStyle(
                                 color: Colors.grey[500], fontSize: 13),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 15),
-                      const Text(
-                        'Insumos en nivel crítico',
-                        style: TextStyle(
+                      const SizedBox(height: 10),
+                      Text(
+                        _mostrarSoloAlertas
+                            ? 'Insumos en nivel crítico'
+                            : 'Existencias y valoración por insumo',
+                        style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.w400),
                       ),
                       const SizedBox(height: 15),
 
-                      // LISTA DE ALERTAS DE INVENTARIO
-                      if (filteredAlertas.isEmpty)
+                      // LISTA DE INSUMOS / ALERTAS
+                      if (filteredList.isEmpty)
                         Center(
                           child: Padding(
                             padding: const EdgeInsets.all(30.0),
@@ -362,7 +448,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                     color: Colors.green[400], size: 48),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Todo el stock está en niveles normales',
+                                  _mostrarSoloAlertas
+                                      ? 'Todo el stock está en niveles normales (0 en alerta)'
+                                      : 'No se encontraron insumos con esa búsqueda',
                                   style: TextStyle(
                                       color: Colors.grey[600], fontSize: 14),
                                   textAlign: TextAlign.center,
@@ -373,7 +461,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         )
                       else
                         Column(
-                          children: filteredAlertas
+                          children: filteredList
                               .map((a) => _buildInventoryRow(a))
                               .toList(),
                         ),
@@ -390,9 +478,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  // Fila de alerta de inventario (viene de la API)
   Widget _buildInventoryRow(AlertaStockModel alerta) {
-    // Iniciales del nombre del insumo de forma segura
     final trimmed = alerta.nombre.trim();
     final parts = trimmed.split(RegExp(r'\s+'));
     String initials = '?';
@@ -402,9 +488,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
       initials = trimmed.substring(0, trimmed.length.clamp(0, 2)).toUpperCase();
     }
 
-    // Si el stock actual es 0 (o menor o igual al mínimo), está en bajo stock/crítico
     final isHealthy =
         alerta.stockActual > alerta.stockMinimo && alerta.stockActual > 0;
+    final valorLinea = alerta.stockActual * alerta.precioUnitario;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -416,7 +502,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ),
       child: Row(
         children: [
-          // Cuadro con las iniciales
           Container(
             width: 45,
             height: 45,
@@ -436,8 +521,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
           ),
           const SizedBox(width: 15),
-
-          // Texto central
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,19 +534,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Mínimo: ${alerta.stockMinimo} ${alerta.unidadMedida}',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  'Mínimo: ${alerta.stockMinimo.toStringAsFixed(1)} ${alerta.unidadMedida}${valorLinea > 0 ? " • C\$ ${valorLinea.toStringAsFixed(0)}" : ""}',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
               ],
             ),
           ),
-
-          // Cantidad y estado
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${alerta.stockActual} ${alerta.unidadMedida}',
+                '${alerta.stockActual.toStringAsFixed(1)} ${alerta.unidadMedida}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
