@@ -8,7 +8,6 @@ import '../../providers/ventas_provider.dart';
 import '../../providers/inventario_provider.dart';
 import '../../providers/pedidos_provider.dart';
 import '../../providers/metrics_provider.dart';
-import '../../../services/order_cart_manager.dart';
 
 import '../inventory/invenroty_screen.dart';
 import '../reports/sales_history_screen.dart';
@@ -256,7 +255,6 @@ class _ManagerScreenState extends State<ManagerScreen> {
                 invProv.clear();
                 pedidosProv.clear();
                 metricsProv.clear();
-                OrderCartManager().clearAll();
 
                 if (!context.mounted) return;
                 Navigator.pushAndRemoveUntil(

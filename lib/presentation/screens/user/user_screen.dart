@@ -113,7 +113,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             final gerentes = allUsers
                 .where((u) =>
                     u.role.toLowerCase().contains('gerente') ||
-                    u.role.toLowerCase().contains('admin'))
+                    u.role.toLowerCase().contains('admin') ||
+                    u.role.toLowerCase().contains('super'))
                 .length;
             final meseros = allUsers
                 .where((u) =>

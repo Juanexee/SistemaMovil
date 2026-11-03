@@ -42,14 +42,18 @@ class PaginationControls extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Contador de elementos
-          Text(
-            'Mostrando $startItem–$endItem de $totalItems',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
+          Flexible(
+            child: Text(
+              'Mostrando $startItem–$endItem de $totalItems',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
+          const SizedBox(width: 8),
 
           // Botones de paginación
           Row(
@@ -65,7 +69,8 @@ class PaginationControls extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFF38231c).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),

@@ -150,7 +150,6 @@ class _WaiterScreenState extends State<WaiterScreen> {
                 invProv.clear();
                 pedidosProv.clear();
                 metricsProv.clear();
-                OrderCartManager().clearAll();
 
                 if (!context.mounted) return;
                 Navigator.pushAndRemoveUntil(
