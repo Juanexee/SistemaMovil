@@ -40,47 +40,60 @@ class ManagerScreen extends StatefulWidget {
 class _ManagerScreenState extends State<ManagerScreen> {
   int _currentIndex = 0;
   String _resolvedRole = '';
+  String _resolvedUser = '';
 
   @override
   void initState() {
     super.initState();
     _resolvedRole = (widget.role ?? '').trim().toLowerCase();
-    _cargarRolSiFalta();
+    _cargarDatosSesion();
   }
 
-  Future<void> _cargarRolSiFalta() async {
-    if (_resolvedRole.isNotEmpty) return;
+  Future<void> _cargarDatosSesion() async {
     try {
-      final stored = await sl<AuthService>().getUserRole();
-      if (mounted && stored != null && stored.trim().isNotEmpty) {
-        setState(() {
-          _resolvedRole = stored.trim().toLowerCase();
-        });
-      }
+      final authService = sl<AuthService>();
+      final storedRole = await authService.getUserRole();
+      final storedUser = await authService.getUserName();
+      if (!mounted) return;
+      setState(() {
+        if (_resolvedRole.isEmpty &&
+            storedRole != null &&
+            storedRole.trim().isNotEmpty) {
+          _resolvedRole = storedRole.trim().toLowerCase();
+        }
+        if (storedUser != null && storedUser.trim().isNotEmpty) {
+          _resolvedUser = storedUser.trim();
+        }
+      });
     } catch (_) {}
   }
 
-  // Construye las pestañas según el perfil y permisos definidos para cada rol:
-  // - Administrador (rolID 1): Acceso Total (Inicio/Auditoría/Métricas, Inventario, Reportes, Usuarios, Ajustes)
-  // - Gerente (rolID 1004): Módulo Analítico y BI (Inicio/KPIs/Auditoría/Métricas MongoDB, Reportes, Inventario, Ajustes)
-  // - Supervisor (rolID 1005): Módulo de Monitoreo (Inventario/Alertas de stock crítico y Consulta de Facturación/Ventas)
+  // Construye las pestañas estrictamente según el rol y lo que puede ver en la matriz oficial:
+  // 1. Gerente (rolID 1004): Módulo Analítico y BI
+  //    -> Dashboards gerenciales, KPIs de ventas, margen de ganancia, ticket promedio,
+  //       gráficos de tendencias y consulta de auditoría/métricas en MongoDB.
+  // 2. Supervisor (rolID 1005): Módulo de Monitoreo
+  //    -> Supervisión de inventario de insumos, alertas de stock mínimo crítico
+  //       y consulta de facturación/ventas.
+  // 3. Administrador (rolID 1): Acceso Total
+  //    -> Control total sobre usuarios, roles, configuraciones generales, inventario y reportes.
   List<_NavTabConfig> _tabsForRole(String roleLower) {
-    if (roleLower.contains('super')) {
+    if (roleLower.contains('super') || roleLower == '1005') {
       return const [
         _NavTabConfig(
-          icon: Icons.inventory_2,
+          icon: Icons.inventory_2_outlined,
           label: 'Inventario',
           screen: InventoryScreen(),
         ),
         _NavTabConfig(
-          icon: Icons.bar_chart,
-          label: 'Ventas',
+          icon: Icons.receipt_long_outlined,
+          label: 'Facturación',
           screen: SalesHistoryScreen(),
         ),
       ];
     }
 
-    if (roleLower.contains('gerente')) {
+    if (roleLower.contains('gerente') || roleLower == '1004') {
       return const [
         _NavTabConfig(
           icon: Icons.analytics_outlined,
@@ -88,37 +101,27 @@ class _ManagerScreenState extends State<ManagerScreen> {
           screen: AuditLogsScreen(),
         ),
         _NavTabConfig(
-          icon: Icons.bar_chart,
-          label: 'Ventas',
+          icon: Icons.trending_up_rounded,
+          label: 'KPIs & Ventas',
           screen: SalesHistoryScreen(),
-        ),
-        _NavTabConfig(
-          icon: Icons.inventory_2,
-          label: 'Inventario',
-          screen: InventoryScreen(),
-        ),
-        _NavTabConfig(
-          icon: Icons.settings,
-          label: 'Ajustes',
-          screen: SettingsScreen(),
         ),
       ];
     }
 
-    // Por defecto: Administrador (Acceso Total)
+    // Por defecto: Administrador (rolID 1) — Acceso Total
     return const [
       _NavTabConfig(
-        icon: Icons.home,
-        label: 'Inicio',
+        icon: Icons.dashboard_outlined,
+        label: 'BI & Inicio',
         screen: AuditLogsScreen(),
       ),
       _NavTabConfig(
-        icon: Icons.inventory_2,
+        icon: Icons.inventory_2_outlined,
         label: 'Inventario',
         screen: InventoryScreen(),
       ),
       _NavTabConfig(
-        icon: Icons.bar_chart,
+        icon: Icons.bar_chart_rounded,
         label: 'Reportes',
         screen: SalesHistoryScreen(),
       ),
@@ -128,27 +131,100 @@ class _ManagerScreenState extends State<ManagerScreen> {
         screen: UserManagementScreen(),
       ),
       _NavTabConfig(
-        icon: Icons.settings,
+        icon: Icons.settings_outlined,
         label: 'Ajustes',
         screen: SettingsScreen(),
       ),
     ];
   }
 
+  Map<String, String> _roleMeta(String roleLower) {
+    if (roleLower.contains('super') || roleLower == '1005') {
+      return {
+        'title': 'Supervisor',
+        'module': 'Módulo de Monitoreo (Inventario y Facturación)',
+      };
+    }
+    if (roleLower.contains('gerente') || roleLower == '1004') {
+      return {
+        'title': 'Gerente',
+        'module': 'Módulo Analítico y BI (KPIs y Auditoría MongoDB)',
+      };
+    }
+    return {
+      'title': 'Administrador',
+      'module': 'Acceso Total (Usuarios, Roles, Inventario, BI y Ajustes)',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    final authRole = context.watch<AuthProvider>().loginResponse?.role ?? '';
+    final authResp = context.watch<AuthProvider>().loginResponse;
+    final authRole = authResp?.role ?? '';
     final effectiveRole = _resolvedRole.isNotEmpty
         ? _resolvedRole
         : authRole.toLowerCase();
+    final effectiveUser = (authResp?.userName.isNotEmpty == true)
+        ? authResp!.userName
+        : (_resolvedUser.isNotEmpty ? _resolvedUser : 'Usuario');
 
     final tabs = _tabsForRole(effectiveRole);
     final safeIndex = _currentIndex.clamp(0, tabs.length - 1);
+    final meta = _roleMeta(effectiveRole);
 
     return Scaffold(
-      body: IndexedStack(
-        index: safeIndex,
-        children: tabs.map((t) => t.screen).toList(),
+      body: Column(
+        children: [
+          // Barra superior con el rol activo y los permisos habilitados
+          Container(
+            width: double.infinity,
+            color: const Color(0xFF2E221E),
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 6,
+              bottom: 8,
+              left: 16,
+              right: 16,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFa67c52),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    meta['title']!.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${meta['module']} • $effectiveUser',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: IndexedStack(
+              index: safeIndex,
+              children: tabs.map((t) => t.screen).toList(),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(vertical: 15),
