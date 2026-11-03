@@ -6,7 +6,6 @@ import '../../../core/di/injection.dart';
 import '../../../services/auth_service.dart';
 import '../../../presentation/providers/auth_provider.dart';
 
-// Lo converti a StatefulWidget porque necesitamos cambiar el estado del ojito de la contraseña
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -17,11 +16,10 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // Controladores (mezcle un poco los nombres xd)
   final TextEditingController user_ctrl = TextEditingController();
   final TextEditingController passController = TextEditingController();
 
-  bool _ocultarPassword = true; // Para el evento onPressed del icono
+  bool _ocultarPassword = true;
 
   @override
   void initState() {
@@ -35,17 +33,28 @@ class _LoginScreenState extends State<LoginScreen> {
       final loggedIn = await authService.isLoggedIn();
       if (!loggedIn || !mounted) return;
       final role = (await authService.getUserRole() ?? '').toLowerCase();
-      if (!mounted) return;
-      if (role == 'gerente' || role == 'administrador') {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const ManagerScreen()),
-        );
-      } else if (role.isNotEmpty) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const WaiterScreen()),
-        );
-      }
+      if (!mounted || role.isEmpty) return;
+      _navegarPorRol(Navigator.of(context), role);
     } catch (_) {}
+  }
+
+  void _navegarPorRol(NavigatorState navigator, String rol) {
+    final r = rol.trim().toLowerCase();
+    if (r.contains('gerente') ||
+        r.contains('admin') ||
+        r.contains('super')) {
+      navigator.pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ManagerScreen(role: r),
+        ),
+      );
+    } else {
+      navigator.pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => const WaiterScreen(),
+        ),
+      );
+    }
   }
 
   @override
@@ -55,21 +64,26 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _autocompletarCredencial(String user, String pass) {
+    setState(() {
+      user_ctrl.text = user;
+      passController.text = pass;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLoading = context.watch<AuthProvider>().isLoading;
 
     return Scaffold(
       backgroundColor: Colors.white,
-      // SingleChildScrollView para que no de error de overflow cuando salga el teclado
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 60.0),
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // alinear todo a la izquierda
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
 
@@ -109,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 50),
+                const SizedBox(height: 40),
 
                 // TEXTOS PRINCIPALES
                 const Text(
@@ -140,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 45),
+                const SizedBox(height: 35),
 
                 // INPUT DE USUARIO
                 const Text(
@@ -151,7 +165,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Aqui use un container para el fondo (primer intento de diseño)
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFF5F5F5),
@@ -166,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Icons.person_outline,
                         color: Colors.black38,
                       ),
-                      border: InputBorder.none, // Quitamos la linea fea
+                      border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(vertical: 18),
                     ),
                     validator: (value) {
@@ -201,7 +214,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Para este me di cuenta que InputDecoration ya traia fill color lol
                 TextFormField(
                   controller: passController,
                   obscureText: _ocultarPassword,
@@ -240,7 +252,50 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
+
+                // SELECTOR RÁPIDO DE PERFILES POR ROL
+                Text(
+                  'Perfiles de acceso rápido (Toca para autocompletar):',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildQuickRoleChip(
+                      label: 'Gerente (BI)',
+                      icon: Icons.analytics_outlined,
+                      onTap: () => _autocompletarCredencial(
+                          'gerente_movil', 'Gerente123*'),
+                    ),
+                    _buildQuickRoleChip(
+                      label: 'Supervisor',
+                      icon: Icons.monitor_heart_outlined,
+                      onTap: () => _autocompletarCredencial(
+                          'supervisor_movil', 'Super123*'),
+                    ),
+                    _buildQuickRoleChip(
+                      label: 'Administrador',
+                      icon: Icons.admin_panel_settings_outlined,
+                      onTap: () =>
+                          _autocompletarCredencial('admin_movil', 'Admin123*'),
+                    ),
+                    _buildQuickRoleChip(
+                      label: 'Mesero (Salón)',
+                      icon: Icons.table_restaurant_outlined,
+                      onTap: () => _autocompletarCredencial(
+                          'mesero_movil', 'Mesero123*'),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 28),
 
                 // BOTON DE INGRESO
                 SizedBox(
@@ -251,7 +306,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? null
                         : () async {
                             if (_formKey.currentState!.validate()) {
-                              // 1. Llamamos al AuthProvider para consumir la API
                               final authProvider = Provider.of<AuthProvider>(
                                 context,
                                 listen: false,
@@ -268,28 +322,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               messenger.clearSnackBars();
 
                               if (exito) {
-                                // 2. Obtenemos el rol real que devolvió el servidor en Azure
-                                String rol = authProvider.loginResponse?.role
-                                        .toLowerCase() ??
-                                    '';
-
-                                // 3. Redirigimos según el rol de la base de datos
-                                if (rol == 'gerente' ||
-                                    rol == 'administrador') {
-                                  navigator.pushReplacement(
-                                    MaterialPageRoute(
-                                      builder: (_) => const ManagerScreen(),
-                                    ),
-                                  );
-                                } else {
-                                  navigator.pushReplacement(
-                                    MaterialPageRoute(
-                                      builder: (_) => const WaiterScreen(),
-                                    ),
-                                  );
-                                }
+                                final rol =
+                                    authProvider.loginResponse?.role ?? '';
+                                _navegarPorRol(navigator, rol);
                               } else {
-                                // Si falla, mostramos el error que viene del Provider/API con duración controlada
                                 messenger.showSnackBar(
                                   SnackBar(
                                     content: Text(authProvider.errorMessage),
@@ -302,9 +338,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             }
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(
-                        0xFF38231c,
-                      ), // Mismo cafe oscuro
+                      backgroundColor: const Color(0xFF38231c),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
                       ),
@@ -350,7 +384,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 60),
+                const SizedBox(height: 40),
 
                 // FOOTER DE AYUDA
                 Center(
@@ -360,9 +394,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         '¿Necesitas ayuda para iniciar sesión?',
                         style: TextStyle(color: Colors.grey[500], fontSize: 13),
                       ),
-                      const SizedBox(
-                        height: 2,
-                      ), // lo baje un poco para que respire
+                      const SizedBox(height: 2),
                       Text(
                         'Contacta a tu manager',
                         style: TextStyle(
@@ -377,6 +409,40 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickRoleChip({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F5F0),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.brown.shade200),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: const Color(0xFF38231c)),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF38231c),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -33,11 +33,14 @@ class UserModel {
         case 1:
           return 'Administrador';
         case 2:
-          return 'Mesero';
         case 3:
-          return 'Gerente';
+          return 'Mesero';
         case 4:
           return 'Cajero';
+        case 1004:
+          return 'Gerente';
+        case 1005:
+          return 'Supervisor';
         default:
           return id != null ? 'Rol $id' : null;
       }

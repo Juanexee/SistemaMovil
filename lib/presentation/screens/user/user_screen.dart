@@ -56,6 +56,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Color _tagColor(String role) {
     final r = role.toLowerCase();
     if (r.contains('gerente')) return const Color(0xFFF7EBE1);
+    if (r.contains('supervisor')) return const Color(0xFFEAF2F8);
     if (r.contains('admin')) return const Color(0xFFEFEFEF);
     if (r.contains('mesero') || r.contains('salón') || r.contains('salon')) {
       return const Color(0xFFEBF5EE);
@@ -66,6 +67,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Color _tagTextColor(String role) {
     final r = role.toLowerCase();
     if (r.contains('gerente')) return const Color(0xFFB57049);
+    if (r.contains('supervisor')) return const Color(0xFF2874A6);
     if (r.contains('admin')) return const Color(0xFF666666);
     if (r.contains('mesero') || r.contains('salón') || r.contains('salon')) {
       return const Color(0xFF427A59);
@@ -76,6 +78,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Color _sideAccentColor(String role) {
     final r = role.toLowerCase();
     if (r.contains('gerente')) return const Color(0xFFDCA887);
+    if (r.contains('supervisor')) return const Color(0xFF85C1E9);
     if (r.contains('admin')) return const Color(0xFFCCCCCC);
     if (r.contains('mesero') || r.contains('salón') || r.contains('salon')) {
       return const Color(0xFFA2C7B3);
@@ -293,7 +296,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                           children: [
                             _buildFilterChip('Todos'),
                             _buildFilterChip('Gerente',
-                                icon: Icons.person_outline),
+                                icon: Icons.insights_outlined),
+                            _buildFilterChip('Supervisor',
+                                icon: Icons.monitor_heart_outlined),
                             _buildFilterChip('Administrador',
                                 icon: Icons.verified_outlined),
                             _buildFilterChip('Mesero',
@@ -423,17 +428,17 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final nameCtrl = TextEditingController();
     final userCtrl = TextEditingController();
     final passCtrl = TextEditingController();
-    int selectedRolId = 2; // Por defecto Mesero
+    int selectedRolId = 3; // Por defecto Mesero
     String selectedRolNombre = 'Mesero';
     bool obscurePass = true;
     bool isSaving = false;
 
-    // Roles estándar del sistema
+    // Roles oficiales del sistema
     final rolesDisponibles = [
       {'id': 1, 'nombre': 'Administrador'},
-      {'id': 2, 'nombre': 'Mesero'},
-      {'id': 3, 'nombre': 'Gerente'},
-      {'id': 4, 'nombre': 'Cajero'},
+      {'id': 1004, 'nombre': 'Gerente'},
+      {'id': 1005, 'nombre': 'Supervisor'},
+      {'id': 3, 'nombre': 'Mesero'},
     ];
 
     showDialog(
@@ -902,15 +907,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController(text: user.name);
     final userCtrl = TextEditingController(text: user.email);
-    int selectedRolId = user.rolId ?? 2;
+    int selectedRolId = user.rolId ?? 3;
     String selectedRolNombre = user.role.isNotEmpty ? user.role : 'Mesero';
     bool isSaving = false;
 
     final rolesDisponibles = [
       {'id': 1, 'nombre': 'Administrador'},
-      {'id': 2, 'nombre': 'Mesero'},
-      {'id': 3, 'nombre': 'Gerente'},
-      {'id': 4, 'nombre': 'Cajero'},
+      {'id': 1004, 'nombre': 'Gerente'},
+      {'id': 1005, 'nombre': 'Supervisor'},
+      {'id': 3, 'nombre': 'Mesero'},
     ];
 
     showDialog(
@@ -962,7 +967,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       initialValue: rolesDisponibles
                               .any((r) => r['id'] == selectedRolId)
                           ? selectedRolId
-                          : 2,
+                          : 3,
                       decoration: InputDecoration(
                         labelText: 'Rol Asignado',
                         border: OutlineInputBorder(
