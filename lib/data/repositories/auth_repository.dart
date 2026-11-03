@@ -6,7 +6,6 @@
 import '../../core/constants/api_constants.dart';
 import '../../core/network/api_client.dart';
 import '../models/auth_model.dart';
-import '../models/users_model.dart';
 import '../../services/secure_storage_service.dart';
 
 class AuthRepository {
@@ -50,7 +49,6 @@ class AuthRepository {
     final official = _officialAccounts[userKey];
 
     try {
-      // 1. Intentamos login real contra el endpoint /api/Auth/login en Azure
       final json = await _client.post(
         ApiConstants.login,
         body: request.toJson(),
@@ -58,7 +56,6 @@ class AuthRepository {
 
       final rawResponse = LoginResponse.fromJson(json as Map<String, dynamic>);
 
-      // Normalizamos el rol con la matriz oficial
       final resolvedRole =
           _normalizeRole(rawResponse.role, official?['role'] as String?);
       final resolvedName = rawResponse.userName.isNotEmpty
@@ -78,108 +75,18 @@ class AuthRepository {
 
       return loginResponse;
     } catch (e) {
-      // 2. Si es una de las 4 cuentas oficiales y la BD de Azure devolvió
-      // "Credenciales inválidas o usuario inactivo", intentamos:
-      // a) Obtener un token JWT real de cualquiera de las cuentas oficiales activas en Azure
-      // b) Reactivar el usuario si estaba inactivo o crearlo si no existía
-      // c) Permitir el acceso garantizado al perfil solicitado
       if (official != null && official['password'] == pass) {
-        String? validJwtToken;
-
-        // Intentamos obtener un JWT válido de alguna cuenta oficial activa en Azure
-        for (final entry in _officialAccounts.entries) {
-          if (entry.key == userKey) continue;
-          try {
-            final bridgeJson = await _client.post(
-              ApiConstants.login,
-              body: LoginRequest(
-                usuario: entry.key,
-                password: entry.value['password'] as String,
-              ).toJson(),
-            );
-            final bridgeResp =
-                LoginResponse.fromJson(bridgeJson as Map<String, dynamic>);
-            if (bridgeResp.token.isNotEmpty) {
-              validJwtToken = bridgeResp.token;
-              await _storage.saveToken(validJwtToken);
-              break;
-            }
-          } catch (_) {}
-        }
-
-        // Intentamos reactivar (si existe inactivo) o dar de alta el usuario oficial en Azure
-        try {
-          bool reactivated = false;
-          try {
-            final rawUsers = await _client.get(ApiConstants.usuarioLeer);
-            if (rawUsers is List) {
-              for (final item in rawUsers) {
-                if (item is Map<String, dynamic>) {
-                  final u = UserModel.fromJson(item);
-                  if (u.email.trim().toLowerCase() == userKey && u.id > 0) {
-                    await _client.put(
-                      ApiConstants.usuarioActualizar(u.id),
-                      body: UserModel(
-                        id: u.id,
-                        name: u.name.isNotEmpty
-                            ? u.name
-                            : (official['nombre'] as String),
-                        email: userKey,
-                        role: official['role'] as String,
-                        rolId: official['rolId'] as int,
-                        activo: true,
-                      ).toUpdateJson(),
-                    );
-                    reactivated = true;
-                    break;
-                  }
-                }
-              }
-            }
-          } catch (_) {}
-
-          if (!reactivated) {
-            await _client.post(
-              ApiConstants.usuarioCrear,
-              body: {
-                'nombre': official['nombre'],
-                'nombreCompleto': official['nombre'],
-                'nombreUsuario': userKey,
-                'usuario': userKey,
-                'clave': pass,
-                'password': pass,
-                'rolId': official['rolId'],
-                'rolID': official['rolId'],
-                'idRol': official['rolId'],
-                'rolNombre': official['role'],
-                'activo': true,
-              },
-            );
-          }
-
-          // Reintentamos login directo con el usuario recién creado/reactivado
-          final retryJson = await _client.post(
-            ApiConstants.login,
-            body: request.toJson(),
-          );
-          final retryResp =
-              LoginResponse.fromJson(retryJson as Map<String, dynamic>);
-          if (retryResp.token.isNotEmpty) {
-            validJwtToken = retryResp.token;
-          }
-        } catch (_) {}
-
-        final finalResp = LoginResponse(
-          token: validJwtToken ??
+        final fallbackResp = LoginResponse(
+          token:
               'offline_jwt_${userKey}_${DateTime.now().millisecondsSinceEpoch}',
           userName: official['nombre'] as String,
           role: official['role'] as String,
         );
 
-        await _storage.saveToken(finalResp.token);
-        await _storage.saveRole(finalResp.role);
-        await _storage.saveUserName(finalResp.userName);
-        return finalResp;
+        await _storage.saveToken(fallbackResp.token);
+        await _storage.saveRole(fallbackResp.role);
+        await _storage.saveUserName(fallbackResp.userName);
+        return fallbackResp;
       }
       rethrow;
     }

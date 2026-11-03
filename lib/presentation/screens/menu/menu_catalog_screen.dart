@@ -4,13 +4,15 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/di/injection.dart';
 import '../../../services/platillo_service.dart';
 import '../../../services/categoria_service.dart';
+import '../../../services/mesas_service.dart';
 import '../../../services/order_cart_manager.dart';
 import '../../../data/models/platillo_model.dart';
 import '../../../data/models/categoria_model.dart';
 import '../order/order_card_screen.dart';
 
 class MenuCatalogScreen extends StatefulWidget {
-  const MenuCatalogScreen({super.key});
+  final Map<String, dynamic>? initialMesa;
+  const MenuCatalogScreen({super.key, this.initialMesa});
 
   @override
   State<MenuCatalogScreen> createState() => _MenuCatalogScreenState();
@@ -33,16 +35,51 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialMesa != null) {
+      OrderCartManager().setActiveMesa(widget.initialMesa, notify: false);
+    }
     _searchCtrl.addListener(() {
       setState(() => _searchQuery = _searchCtrl.text.toLowerCase().trim());
     });
     _cargarMenu();
+    _sincronizarMesas();
   }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _sincronizarMesas() async {
+    try {
+      final lista = await sl<MesasService>().getMesas();
+      if (lista.isNotEmpty) {
+        final mapped = lista.map((m) {
+          final isLibre = m.estado.toLowerCase() == 'disponible' ||
+              m.estado.toLowerCase() == 'libre';
+          final isOcupada = m.estado.toLowerCase() == 'ocupada';
+          final status = isLibre ? 'Libre' : (isOcupada ? 'Ocupada' : m.estado);
+          final count = OrderCartManager().countForMesa(m.id);
+          final sub = OrderCartManager().subtotalForMesa(m.id);
+
+          return <String, dynamic>{
+            'id': m.id,
+            'numero': m.numero,
+            'name': 'Mesa ${m.numero.toString().padLeft(2, '0')}',
+            'status': count > 0 ? 'Ocupada' : status,
+            'capacidad': m.capacidad,
+            'detail': count > 0
+                ? '$count platillo${count == 1 ? '' : 's'} • C\$ ${sub.toStringAsFixed(2)}'
+                : 'Capacidad: ${m.capacidad} personas',
+            'waiterInitials': 'MR',
+            'waiterName': 'Mesero',
+            'type': count > 0 ? 'Ocupada' : status,
+          };
+        }).toList();
+        OrderCartManager().setAvailableTables(mapped, notify: true);
+      }
+    } catch (_) {}
   }
 
   Future<void> _cargarMenu() async {
@@ -55,7 +92,6 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
       final platillos = results[0] as List<PlatilloModel>;
       final categorias = results[1] as List<CategoriaModel>;
 
-      // Mapa de ID de categoría -> Nombre para resolver categorías cuando el platillo solo trae categoriaId
       final Map<int, String> catMap = {
         for (final c in categorias) c.id: c.nombre,
       };
@@ -74,7 +110,7 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
           if (platillos.isNotEmpty) {
             _dishes.clear();
             for (final p in platillos) {
-              if (!p.disponible) continue; // Solo mostrar platillos disponibles
+              if (!p.disponible) continue;
               final resolvedCat = (p.categoriaNombre != null &&
                       p.categoriaNombre!.trim().isNotEmpty)
                   ? p.categoriaNombre!.trim()
@@ -104,7 +140,6 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
     }
   }
 
-  // Lista con datos de fallback si la API no está disponible
   final List<Map<String, String>> _dishes = [
     {
       'id': '1',
@@ -174,7 +209,9 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTopBar(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+              _buildActiveMesaBanner(),
+              const SizedBox(height: 16),
               _buildHeaderSection(),
               const SizedBox(height: 16),
               _buildSearchField(),
@@ -198,11 +235,19 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
       listenable: OrderCartManager(),
       builder: (context, _) {
         final count = OrderCartManager().totalCount;
+        final canPop = Navigator.canPop(context);
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
+                if (canPop) ...[
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 4),
+                ],
                 Container(
                   width: 42,
                   height: 42,
@@ -250,7 +295,6 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 const SizedBox(width: 16),
-                // Botón de Comanda / Carrito con Badge
                 InkWell(
                   onTap: () {
                     Navigator.push(
@@ -316,6 +360,80 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
     );
   }
 
+  // Banner informativo de la mesa activa actual
+  Widget _buildActiveMesaBanner() {
+    return ListenableBuilder(
+      listenable: OrderCartManager(),
+      builder: (context, _) {
+        final activeMesa = OrderCartManager().activeMesa;
+        final mesaName = activeMesa?['name'] ?? 'Mesa 01';
+        final mesaId = OrderCartManager.resolveMesaKey(activeMesa);
+        final count = OrderCartManager().countForMesa(mesaId);
+        final sub = OrderCartManager().subtotalForMesa(mesaId);
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F0EE),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.brown.shade200),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.table_restaurant_rounded,
+                  color: Color(0xFF38231C), size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Mesa seleccionada: $mesaName',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Color(0xFF2E221E),
+                      ),
+                    ),
+                    Text(
+                      count > 0
+                          ? '$count platillo${count == 1 ? '' : 's'} en esta mesa • C\$ ${sub.toStringAsFixed(2)}'
+                          : 'Toca + en cualquier platillo para elegir la mesa destino',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.brown.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => OrderCartScreen(mesa: activeMesa),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.receipt_long,
+                    size: 16, color: Color(0xFF38231C)),
+                label: const Text(
+                  'Ver mesa',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF38231C),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // 2. Cabecera de sección
   Widget _buildHeaderSection() {
     return Column(
@@ -341,7 +459,7 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
         ),
         SizedBox(height: 4),
         Text(
-          'Selecciona los productos para agregar a la orden de la mesa',
+          'Toca el botón + para elegir a qué mesa enviar el platillo',
           style: TextStyle(
             fontSize: 13,
             color: Colors.grey,
@@ -471,7 +589,8 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
           padding: const EdgeInsets.all(30.0),
           child: Column(
             children: [
-              Icon(Icons.restaurant_menu, size: 48, color: Colors.grey.shade400),
+              Icon(Icons.restaurant_menu,
+                  size: 48, color: Colors.grey.shade400),
               const SizedBox(height: 10),
               Text(
                 'No se encontraron platillos',
@@ -547,66 +666,15 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              // Botón de más para agregar a la orden
+              // Botón + que abre el modal preguntando a qué mesa va dirigido el platillo
               Container(
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF3F0EE),
+                  color: Color(0xFF38231C),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.add,
-                      color: Color(0xFF2E221E), size: 20),
-                  onPressed: () {
-                    final title = dish['title'] ?? 'Platillo';
-                    final rawPrice = dish['rawPrice'] ?? '0';
-                    final price = double.tryParse(rawPrice) ??
-                        double.tryParse((dish['price'] ?? '')
-                            .replaceAll(RegExp(r'[^0-9.]'), '')) ??
-                        0.0;
-                    final id = int.tryParse(dish['id'] ?? '0');
-
-                    OrderCartManager().addItem(
-                      id: id,
-                      title: title,
-                      price: price,
-                    );
-
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            const Icon(Icons.check_circle,
-                                color: Colors.greenAccent, size: 18),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                '$title agregado a la comanda',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        backgroundColor: const Color(0xFF38231C),
-                        behavior: SnackBarBehavior.floating,
-                        duration: const Duration(seconds: 2),
-                        action: SnackBarAction(
-                          label: 'Ver orden',
-                          textColor: Colors.amberAccent,
-                          onPressed: () {
-                            if (!context.mounted) return;
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => OrderCartScreen(
-                                  mesa: OrderCartManager().activeMesa,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  },
+                  icon: const Icon(Icons.add, color: Colors.white, size: 20),
+                  onPressed: () => _mostrarModalSeleccionMesa(context, dish),
                 ),
               ),
             ],
@@ -616,12 +684,403 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
     );
   }
 
-  // Construye la imagen del platillo admitiendo Base64, URL absoluta, URL relativa y fallbacks locales acordes al platillo
+  // Modal que pregunta a qué mesa va dirigido el platillo, cantidad y nota especial
+  void _mostrarModalSeleccionMesa(
+      BuildContext parentContext, Map<String, String> dish) {
+    final title = dish['title'] ?? 'Platillo';
+    final rawPrice = dish['rawPrice'] ?? '0';
+    final price = double.tryParse(rawPrice) ??
+        double.tryParse(
+            (dish['price'] ?? '').replaceAll(RegExp(r'[^0-9.]'), '')) ??
+        0.0;
+    final dishId = int.tryParse(dish['id'] ?? '0');
+
+    final tables = OrderCartManager().availableTables;
+    Map<String, dynamic> selectedMesa = OrderCartManager().activeMesa ??
+        (tables.isNotEmpty
+            ? tables.first
+            : {
+                'id': 1,
+                'numero': 1,
+                'name': 'Mesa 01',
+                'status': 'Libre',
+                'capacidad': 4,
+              });
+    int selectedMesaId = OrderCartManager.resolveMesaKey(selectedMesa);
+    int quantity = 1;
+    final noteCtrl = TextEditingController();
+
+    showModalBottomSheet(
+      context: parentContext,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final totalItem = price * quantity;
+            final mesaNombre = selectedMesa['name'] ?? 'Mesa 01';
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Barra superior del modal
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Encabezado del platillo
+                      Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: _buildDishImage(dish),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'AGREGAR A COMANDA',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  title,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2E221E),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'C\$ ${price.toStringAsFixed(2)} c/u',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFFa67c52),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const Divider(height: 28),
+
+                      // Pregunta principal: Selección de mesa
+                      const Text(
+                        '¿A qué mesa va dirigido este platillo?',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2E221E),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Selecciona la mesa donde se registrará en su comanda:',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Cuadrícula de mesas
+                      GridView.builder(
+                        itemCount: tables.length,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          childAspectRatio: 1.45,
+                        ),
+                        itemBuilder: (ctx, i) {
+                          final t = tables[i];
+                          final tId = OrderCartManager.resolveMesaKey(t);
+                          final isSelected = tId == selectedMesaId;
+                          final dishCount =
+                              OrderCartManager().countForMesa(tId);
+                          final status =
+                              dishCount > 0 ? 'Ocupada' : (t['status'] ?? 'Libre');
+
+                          return InkWell(
+                            onTap: () {
+                              setModalState(() {
+                                selectedMesa = t;
+                                selectedMesaId = tId;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFF38231C)
+                                    : const Color(0xFFF8F9FA),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF38231C)
+                                      : Colors.grey.shade300,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.table_restaurant_rounded,
+                                        size: 15,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : const Color(0xFF2E221E),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          t['name'] ?? 'Mesa $tId',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: isSelected
+                                                ? Colors.white
+                                                : const Color(0xFF2E221E),
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    dishCount > 0
+                                        ? '$dishCount platillo${dishCount == 1 ? '' : 's'}'
+                                        : status.toString(),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: isSelected
+                                          ? Colors.amberAccent
+                                          : (dishCount > 0
+                                              ? Colors.orange.shade800
+                                              : Colors.green.shade700),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Selector de cantidad + Nota opcional
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Cantidad de porciones:',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2E221E),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8F9FA),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.remove, size: 18),
+                                  onPressed: quantity > 1
+                                      ? () => setModalState(() => quantity--)
+                                      : null,
+                                  constraints: const BoxConstraints(
+                                      minWidth: 36, minHeight: 36),
+                                  padding: EdgeInsets.zero,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  child: Text(
+                                    '$quantity',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2E221E),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.add, size: 18),
+                                  onPressed: () =>
+                                      setModalState(() => quantity++),
+                                  constraints: const BoxConstraints(
+                                      minWidth: 36, minHeight: 36),
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      TextField(
+                        controller: noteCtrl,
+                        decoration: InputDecoration(
+                          hintText:
+                              'Nota opcional (ej. sin cebolla, término medio)...',
+                          hintStyle:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
+                          prefixIcon: const Icon(Icons.edit_note_rounded,
+                              color: Colors.grey),
+                          filled: true,
+                          fillColor: const Color(0xFFF8F9FA),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      // Botón confirmar envío a la mesa seleccionada
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF38231C),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 0,
+                          ),
+                          icon: const Icon(Icons.add_task_rounded,
+                              color: Colors.white, size: 20),
+                          label: Text(
+                            'Agregar a $mesaNombre • C\$ ${totalItem.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onPressed: () {
+                            final notaTexto = noteCtrl.text.trim();
+                            Navigator.pop(modalCtx);
+
+                            OrderCartManager().addItem(
+                              id: dishId,
+                              title: title,
+                              price: price,
+                              quantity: quantity,
+                              note: notaTexto,
+                              mesaId: selectedMesaId,
+                              mesa: selectedMesa,
+                            );
+
+                            ScaffoldMessenger.of(parentContext)
+                                .clearSnackBars();
+                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    const Icon(Icons.check_circle,
+                                        color: Colors.greenAccent, size: 18),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        '${quantity}x $title agregado a $mesaNombre',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                backgroundColor: const Color(0xFF38231C),
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 3),
+                                action: SnackBarAction(
+                                  label: 'Ver mesa',
+                                  textColor: Colors.amberAccent,
+                                  onPressed: () {
+                                    if (!parentContext.mounted) return;
+                                    Navigator.of(parentContext).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => OrderCartScreen(
+                                          mesa: selectedMesa,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Construye la imagen del platillo
   Widget _buildDishImage(Map<String, String> dish) {
     final imageUrl = (dish['imageUrl'] ?? '').trim();
     const double size = 70;
 
-    // 1. Imagen en formato Base64 (común en APIs que devuelven strings en base64)
     if (imageUrl.startsWith('data:image') ||
         (!imageUrl.startsWith('http') &&
             imageUrl.length > 80 &&
@@ -640,7 +1099,6 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
       } catch (_) {}
     }
 
-    // 2. URL Absoluta (http o https)
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return Image.network(
         imageUrl,
@@ -666,7 +1124,6 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
       );
     }
 
-    // 3. URL Relativa devuelta por la API (ejemplo: /uploads/platillos/1.jpg)
     if (imageUrl.contains('/') && !imageUrl.startsWith('http')) {
       final fullUrl =
           '${ApiConstants.baseUrl}${imageUrl.startsWith('/') ? '' : '/'}$imageUrl';
@@ -694,11 +1151,9 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
       );
     }
 
-    // 4. Si la API no tiene imagen o falló la carga, usamos el asset local acorde al platillo
     return _fallbackAssetImage(dish, size);
   }
 
-  // Mapeo inteligente al asset local según el nombre del platillo
   Widget _fallbackAssetImage(Map<String, String> dish, double size) {
     final title = (dish['title'] ?? '').toLowerCase();
 
@@ -718,7 +1173,6 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
         title.contains('lomo')) {
       assetPath = 'assets/images/Carne Asada.jpg';
     } else {
-      // Para platillos no emparejados (ej. bebidas, postres), un icono elegante
       return _imagePlaceholder(size);
     }
 

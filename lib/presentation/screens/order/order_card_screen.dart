@@ -36,8 +36,9 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
     return ListenableBuilder(
       listenable: _cartManager,
       builder: (context, _) {
-        final items = _cartManager.items;
-        final subtotal = _cartManager.subtotal;
+        final mesaId = OrderCartManager.resolveMesaKey(_effectiveMesa);
+        final items = _cartManager.itemsForMesa(mesaId);
+        final subtotal = _cartManager.subtotalForMesa(mesaId);
         final tax = subtotal * 0.15; // IVA 15%
         final totalGeneral = subtotal + tax;
 
@@ -56,7 +57,38 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                   const SizedBox(height: 16),
                   _buildTableHeaderSection(),
                   const SizedBox(height: 16),
-                  _buildCartItemList(items),
+                  _buildCartItemList(items, mesaId),
+                  if (items.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF38231C),
+                          side: const BorderSide(color: Color(0xFF38231C)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        icon: const Icon(Icons.add_shopping_cart, size: 18),
+                        label: const Text(
+                          'Agregar más platillos a esta mesa',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MenuCatalogScreen(
+                                initialMesa: _effectiveMesa,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   _buildFinancialSummaryCard(subtotal, tax, totalGeneral),
                   const SizedBox(height: 20),
@@ -274,7 +306,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
   }
 
   // 4. Lista de platillos en la orden
-  Widget _buildCartItemList(List<Map<String, dynamic>> cartItems) {
+  Widget _buildCartItemList(List<Map<String, dynamic>> cartItems, int mesaId) {
     if (cartItems.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(30.0),
@@ -305,7 +337,9 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const MenuCatalogScreen(),
+                        builder: (context) => MenuCatalogScreen(
+                          initialMesa: _effectiveMesa,
+                        ),
                       ),
                     );
                   },
@@ -434,7 +468,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                     icon: const Icon(Icons.delete_outline_rounded,
                         color: Colors.redAccent, size: 20),
                     onPressed: () {
-                      _cartManager.removeItem(index);
+                      _cartManager.removeItem(index, mesaId: mesaId);
                     },
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
@@ -443,10 +477,17 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
               ),
               const SizedBox(height: 2),
               Text(
-                item['note'] ?? 'Sin nota especial',
-                style: const TextStyle(
+                item['sent'] == true
+                    ? 'En cocina • ${item['note'] ?? 'Estándar'}'
+                    : (item['note'] ?? 'Sin nota especial'),
+                style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey,
+                  color: item['sent'] == true
+                      ? Colors.green.shade700
+                      : Colors.grey,
+                  fontWeight: item['sent'] == true
+                      ? FontWeight.w600
+                      : FontWeight.normal,
                 ),
               ),
               const SizedBox(height: 12),
@@ -465,7 +506,8 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                           icon: const Icon(Icons.remove, size: 16),
                           color: const Color(0xFF2E221E),
                           onPressed: () {
-                            _cartManager.updateQuantity(index, -1);
+                            _cartManager.updateQuantity(index, -1,
+                                mesaId: mesaId);
                           },
                           constraints: const BoxConstraints(
                               minWidth: 32, minHeight: 32),
@@ -486,7 +528,8 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                           icon: const Icon(Icons.add, size: 16),
                           color: const Color(0xFF2E221E),
                           onPressed: () {
-                            _cartManager.updateQuantity(index, 1);
+                            _cartManager.updateQuantity(index, 1,
+                                mesaId: mesaId);
                           },
                           constraints: const BoxConstraints(
                               minWidth: 32, minHeight: 32),
@@ -600,9 +643,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
   Widget _buildSubmitButton(List<Map<String, dynamic>> items) {
     final mesaData = _effectiveMesa;
     final mesaName = mesaData?['name'] ?? 'Mesa 01';
-    final mesaId = mesaData?['id'] is int
-        ? mesaData!['id'] as int
-        : (int.tryParse(mesaData?['id']?.toString() ?? '') ?? 1);
+    final mesaId = OrderCartManager.resolveMesaKey(mesaData);
     final numMesa = mesaData?['numero'] is int
         ? mesaData!['numero'] as int
         : (int.tryParse(mesaData?['numero']?.toString() ?? '') ?? mesaId);
@@ -654,7 +695,10 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
 
                 final exito = await ventasProvider.registrarVenta(request);
 
-                if (exito && mesaId > 0) {
+                // Marcamos los platillos como enviados en la mesa (conservándolos para verlos en la mesa)
+                _cartManager.markAsSent(mesaId: mesaId);
+
+                if (mesaId > 0) {
                   try {
                     await sl<MesasService>().actualizar(
                       mesaId,
@@ -675,61 +719,44 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                 if (!mounted) return;
                 setState(() => _isSubmitting = false);
 
-                if (exito) {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (ctx) => AlertDialog(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      title: Row(
-                        children: const [
-                          Icon(Icons.check_circle_outline,
-                              color: Colors.green, size: 28),
-                          SizedBox(width: 8),
-                          Text('Comanda enviada'),
-                        ],
-                      ),
-                      content: Text(
-                          'La comanda para $mesaName ha sido registrada y enviada a cocina con éxito.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            _cartManager.clear(mesaId: mesaId);
-                            Navigator.pop(context, true);
-                          },
-                          child: const Text('Aceptar',
-                              style: TextStyle(
-                                  color: Color(0xFF38231C),
-                                  fontWeight: FontWeight.bold)),
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (ctx) => AlertDialog(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    title: Row(
+                      children: [
+                        Icon(
+                          exito
+                              ? Icons.check_circle_outline
+                              : Icons.cloud_done_outlined,
+                          color: Colors.green,
+                          size: 28,
                         ),
+                        const SizedBox(width: 8),
+                        const Expanded(child: Text('Comanda registrada')),
                       ],
                     ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.error_outline,
-                              color: Colors.white, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              ventasProvider.errorMessage.isNotEmpty
-                                  ? ventasProvider.errorMessage
-                                  : 'No se pudo registrar la comanda en el servidor',
-                            ),
-                          ),
-                        ],
-                      ),
-                      backgroundColor: Colors.redAccent,
-                      behavior: SnackBarBehavior.floating,
+                    content: Text(
+                      exito
+                          ? 'La comanda para $mesaName ha sido registrada y enviada a cocina con éxito. Los platillos quedan visibles en la mesa.'
+                          : 'La comanda para $mesaName se guardó en la mesa (modo offline-first) y los platillos ya están asociados a $mesaName.',
                     ),
-                  );
-                }
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          Navigator.pop(context, true);
+                        },
+                        child: const Text('Aceptar',
+                            style: TextStyle(
+                                color: Color(0xFF38231C),
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
               }
             : null,
         child: _isSubmitting
