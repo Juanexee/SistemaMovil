@@ -692,15 +692,19 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'TELEMETRÍA MONGODB • /api/Metrics',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                    letterSpacing: 1.1,
-                    fontWeight: FontWeight.bold,
+                const Expanded(
+                  child: Text(
+                    'TELEMETRÍA MONGODB • /api/Metrics',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      letterSpacing: 1.1,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 InkWell(
                   onTap: () => metricsProvider.loadMetrics(),
                   borderRadius: BorderRadius.circular(8),
@@ -799,23 +803,31 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: const [
-                              Text(
-                                'Latencia Media API',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13,
+                              Expanded(
+                                child: Text(
+                                  'Latencia Media API',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              SizedBox(width: 4),
                               Icon(Icons.bolt, color: Colors.amberAccent, size: 18),
                             ],
                           ),
                           const SizedBox(height: 10),
-                          Text(
-                            '${avgMs.toStringAsFixed(1)} ms',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${avgMs.toStringAsFixed(1)} ms',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -848,24 +860,32 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Memoria / CPU',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 13,
+                              Expanded(
+                                child: Text(
+                                  'Memoria / CPU',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              const SizedBox(width: 4),
                               Icon(Icons.memory,
                                   color: Colors.brown[600], size: 18),
                             ],
                           ),
                           const SizedBox(height: 10),
-                          Text(
-                            '${currentRam.toStringAsFixed(1)} MB',
-                            style: const TextStyle(
-                              color: Colors.black87,
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${currentRam.toStringAsFixed(1)} MB',
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 12),
