@@ -25,8 +25,10 @@ Future<void> main() async {
   // Aseguramos que los componentes de Flutter estén inicializados
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Cargamos el archivo .env para leer la URL de Azure
-  await dotenv.load(fileName: ".env");
+  // 1. Cargamos el archivo .env para leer la URL de Azure (con respaldo seguro si no existe)
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (_) {}
 
   // 2. Inicializamos las dependencias con GetIt (nuestros niveles del 1 al 5)
   setupDependencies();
