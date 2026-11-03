@@ -105,18 +105,23 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
 
   // 1. Top Bar superior
   Widget _buildTopBar() {
+    final canPop = Navigator.canPop(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(width: 4),
+            if (canPop) ...[
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+              const SizedBox(width: 4),
+            ],
             Container(
               width: 42,
               height: 42,
@@ -252,14 +257,18 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              mesaName,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2E221E),
+            Flexible(
+              child: Text(
+                mesaName,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E221E),
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
@@ -377,6 +386,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                             4);
 
                     if (mesaId > 0) {
+                      _cartManager.clear(mesaId: mesaId);
                       try {
                         await sl<MesasService>().actualizar(
                           mesaId,
@@ -397,7 +407,9 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                         const SnackBar(
                             content: Text('Mesa marcada como Libre')),
                       );
-                      Navigator.pop(context, true);
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context, true);
+                      }
                     }
                   },
                   icon: const Icon(Icons.check_circle_outline,
@@ -747,7 +759,9 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                       TextButton(
                         onPressed: () {
                           Navigator.pop(ctx);
-                          Navigator.pop(context, true);
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context, true);
+                          }
                         },
                         child: const Text('Aceptar',
                             style: TextStyle(

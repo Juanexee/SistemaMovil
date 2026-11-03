@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/di/injection.dart';
 import '../../../services/secure_storage_service.dart';
+import '../../providers/inventario_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -50,6 +52,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         systemAlerts: systemAlerts,
       );
       if (mounted) {
+        // Recargamos el inventario para aplicar el nuevo umbral mínimo inmediatamente
+        try {
+          Provider.of<InventarioProvider>(context, listen: false).cargarTodo();
+        } catch (_) {}
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -101,16 +107,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             width: 35,
                             height: 35,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF2E221E),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Center(
-                              child: Text(
-                                'EL',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.asset(
+                                'assets/images/mimi2.png',
+                                fit: BoxFit.cover,
                               ),
                             ),
                           ),

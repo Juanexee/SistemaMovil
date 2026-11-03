@@ -188,13 +188,17 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Historial de Ventas',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w400,
+                        const Expanded(
+                          child: Text(
+                            'Historial de Ventas',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const SizedBox(width: 8),
                         // Botón de actualizar
                         InkWell(
                           onTap: () {
@@ -396,12 +400,16 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 10),
-                                  Text(
-                                    'C\$ ${totalHoy.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'C\$ ${totalHoy.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 15),
