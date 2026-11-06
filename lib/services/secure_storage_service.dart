@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // secure_storage_service.dart
 // Guarda el token JWT de forma segura en el dispositivo.
 // Usa flutter_secure_storage que en Android usa KeyStore
@@ -27,7 +27,7 @@ class SecureStorageService {
     await _storage.write(key: _keyToken, value: token);
   }
 
-  // Lee el token guardado â€” puede ser null si no hay sesion activa
+  // Lee el token guardado — puede ser null si no hay sesion activa
   Future<String?> getToken() async {
     return await _storage.read(key: _keyToken);
   }
@@ -38,7 +38,7 @@ class SecureStorageService {
   }
 
   // -------------------------------------------------------
-  // ROL DEL USUARIO (RBAC â€” RF-MOV-AUT-03)
+  // ROL DEL USUARIO (RBAC — RF-MOV-AUT-03)
   // Guardo el rol para controlar a que pantallas puede entrar
   // -------------------------------------------------------
 
@@ -71,6 +71,31 @@ class SecureStorageService {
   }
 
   // -------------------------------------------------------
+  // AJUSTES Y PREFERENCIAS
+  // -------------------------------------------------------
+  Future<void> saveSettings({
+    required double stockMinimo,
+    required bool pushNoti,
+    required bool systemAlerts,
+  }) async {
+    await _storage.write(key: 'pref_stock_minimo', value: stockMinimo.toString());
+    await _storage.write(key: 'pref_push_noti', value: pushNoti.toString());
+    await _storage.write(key: 'pref_system_alerts', value: systemAlerts.toString());
+  }
+
+  Future<Map<String, dynamic>> getSettings() async {
+    final stockStr = await _storage.read(key: 'pref_stock_minimo');
+    final pushStr = await _storage.read(key: 'pref_push_noti');
+    final alertsStr = await _storage.read(key: 'pref_system_alerts');
+
+    return {
+      'stockMinimo': double.tryParse(stockStr ?? '') ?? 10.0,
+      'pushNoti': pushStr == 'true',
+      'systemAlerts': alertsStr != null ? (alertsStr == 'true') : true,
+    };
+  }
+
+  // -------------------------------------------------------
   // VERIFICAR SESION
   // -------------------------------------------------------
 
@@ -81,10 +106,13 @@ class SecureStorageService {
   }
 
   // -------------------------------------------------------
-  // CERRAR SESION â€” Borra todo lo guardado
+  // CERRAR SESION — Borra los datos de sesion manteniendo preferencias
   // Cumple con RNF-MOV-SEG-03: destruye el estado al expirar
   // -------------------------------------------------------
   Future<void> clearAll() async {
-    await _storage.deleteAll();
+    await _storage.delete(key: _keyToken);
+    await _storage.delete(key: _keyRole);
+    await _storage.delete(key: _keyUserName);
+    await _storage.delete(key: _keyUserId);
   }
 }

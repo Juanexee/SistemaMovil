@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // inventario_repository.dart
 // Monitoreo del inventario y alertas de stock critico
 // Cubre RF-MOV-MON-01 y RF-MOV-MON-02
@@ -15,14 +15,32 @@ class InventarioRepository {
   // Estado global del inventario (existencias, valoracion, tasa de alerta)
   Future<ResumenInventarioModel> getResumen() async {
     final json = await _client.get(ApiConstants.inventarioResumen);
-    return ResumenInventarioModel.fromJson(json as Map<String, dynamic>);
+    if (json is Map<String, dynamic>) {
+      return ResumenInventarioModel.fromJson(json);
+    }
+    throw Exception('Respuesta inválida de resumen de inventario');
   }
 
-  // Insumos que alcanzaron o superaron el stock minimo â€” para notificaciones
+  // Insumos que alcanzaron o superaron el stock minimo — para notificaciones
   Future<List<AlertaStockModel>> getAlertas() async {
     final json = await _client.get(ApiConstants.inventarioAlertas);
-    if (json is! List) throw Exception('Se esperaba una lista de alertas');
-    return json
+    List<dynamic> list = [];
+    if (json is List) {
+      list = json;
+    } else if (json is Map<String, dynamic>) {
+      if (json['alertas'] is List) {
+        list = json['alertas'] as List;
+      } else if (json['data'] is List) {
+        list = json['data'] as List;
+      } else if (json['items'] is List) {
+        list = json['items'] as List;
+      } else if (json['insumos'] is List) {
+        list = json['insumos'] as List;
+      }
+    } else {
+      throw Exception('Se esperaba una lista de alertas');
+    }
+    return list
         .map((e) => AlertaStockModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }

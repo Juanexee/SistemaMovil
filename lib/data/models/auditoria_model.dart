@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // auditoria_model.dart
 // Modelo para los logs del sistema guardados en MongoDB
 // Cubre RF-MOV-AUD-01 y RF-MOV-AUD-02
@@ -25,10 +25,10 @@ class LogAuditoriaModel {
     return LogAuditoriaModel(
       // MongoDB usa '_id' en lugar de 'id'
       id:                  json['_id']                ?? json['id'] ?? '',
-      fecha:               json['fecha']              ?? '',
+      fecha:               json['fechaHora']          ?? json['fecha'] ?? '',
       tipoEvento:          json['tipoEvento']         ?? '',
       modulo:              json['modulo']             ?? '',
-      usuarioResponsable:  json['usuarioResponsable'] ?? '',
+      usuarioResponsable:  json['nombreUsuario']      ?? json['usuarioResponsable'] ?? '',
       descripcion:         json['descripcion']        ?? '',
     );
   }

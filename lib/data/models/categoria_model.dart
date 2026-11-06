@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // categoria_model.dart
 // =========================================================
 class CategoriaModel {
@@ -10,9 +10,9 @@ class CategoriaModel {
 
   factory CategoriaModel.fromJson(Map<String, dynamic> json) {
     return CategoriaModel(
-      id:     json['id']     ?? 0,
-      nombre: json['nombre'] ?? '',
-      activo: json['activo'] ?? true,
+      id:     json['categoriaID'] ?? json['id'] ?? 0,
+      nombre: json['nombre']      ?? '',
+      activo: json['activo']      ?? true,
     );
   }
 

@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // api_client.dart
 // El mensajero de la app. Ahora soporta todos los metodos
 // HTTP y agrega el token JWT automaticamente en cada peticion
@@ -14,11 +14,13 @@ class ApiClient {
   // Lo uso para obtener el token JWT guardado
   final SecureStorageService _storage;
 
+  static const Duration _timeout = Duration(seconds: 20);
+
   // Constructor: recibo el servicio de almacenamiento para poder leer el token
   ApiClient(this._storage) : _client = http.Client();
 
   // -----------------------------------------------------------
-  // _buildHeaders â€” construye los headers para cada peticion
+  // _buildHeaders — construye los headers para cada peticion
   // Siempre mando Content-Type JSON. Si hay token guardado,
   // agrego el header Authorization con el Bearer token.
   // -----------------------------------------------------------
@@ -36,7 +38,7 @@ class ApiClient {
   }
 
   // -----------------------------------------------------------
-  // GET â€” Para leer datos (listas, objetos, KPIs, etc.)
+  // GET — Para leer datos (listas, objetos, KPIs, etc.)
   // queryParameters es opcional, sirve para filtros en la URL
   // Ejemplo: /ventas/filtrar?fechaInicio=2024-01-01
   // -----------------------------------------------------------
@@ -47,12 +49,12 @@ class ApiClient {
     final uri = Uri.parse('${ApiConstants.baseUrl}$path')
         .replace(queryParameters: queryParameters);
     final headers = await _buildHeaders();
-    final response = await _client.get(uri, headers: headers);
+    final response = await _client.get(uri, headers: headers).timeout(_timeout);
     return _handleResponse(response);
   }
 
   // -----------------------------------------------------------
-  // POST â€” Para crear datos (login, insertar, registrar)
+  // POST — Para crear datos (login, insertar, registrar)
   // body es el objeto que mando al servidor como JSON
   // -----------------------------------------------------------
   Future<dynamic> post(
@@ -61,16 +63,18 @@ class ApiClient {
   }) async {
     final uri = Uri.parse('${ApiConstants.baseUrl}$path');
     final headers = await _buildHeaders();
-    final response = await _client.post(
-      uri,
-      headers: headers,
-      body: body != null ? jsonEncode(body) : null,
-    );
+    final response = await _client
+        .post(
+          uri,
+          headers: headers,
+          body: body != null ? jsonEncode(body) : null,
+        )
+        .timeout(_timeout);
     return _handleResponse(response);
   }
 
   // -----------------------------------------------------------
-  // PUT â€” Para actualizar un registro completo
+  // PUT — Para actualizar un registro completo
   // -----------------------------------------------------------
   Future<dynamic> put(
     String path, {
@@ -78,16 +82,18 @@ class ApiClient {
   }) async {
     final uri = Uri.parse('${ApiConstants.baseUrl}$path');
     final headers = await _buildHeaders();
-    final response = await _client.put(
-      uri,
-      headers: headers,
-      body: body != null ? jsonEncode(body) : null,
-    );
+    final response = await _client
+        .put(
+          uri,
+          headers: headers,
+          body: body != null ? jsonEncode(body) : null,
+        )
+        .timeout(_timeout);
     return _handleResponse(response);
   }
 
   // -----------------------------------------------------------
-  // PATCH â€” Para actualizar solo un campo o estado
+  // PATCH — Para actualizar solo un campo o estado
   // Ejemplo: cambiar estado de un grupo de pedidos
   // -----------------------------------------------------------
   Future<dynamic> patch(
@@ -96,37 +102,44 @@ class ApiClient {
   }) async {
     final uri = Uri.parse('${ApiConstants.baseUrl}$path');
     final headers = await _buildHeaders();
-    final response = await _client.patch(
-      uri,
-      headers: headers,
-      body: body != null ? jsonEncode(body) : null,
-    );
+    final response = await _client
+        .patch(
+          uri,
+          headers: headers,
+          body: body != null ? jsonEncode(body) : null,
+        )
+        .timeout(_timeout);
     return _handleResponse(response);
   }
 
   // -----------------------------------------------------------
-  // DELETE â€” Para eliminar un registro
+  // DELETE — Para eliminar un registro
   // -----------------------------------------------------------
   Future<dynamic> delete(String path) async {
     final uri = Uri.parse('${ApiConstants.baseUrl}$path');
     final headers = await _buildHeaders();
-    final response = await _client.delete(uri, headers: headers);
+    final response =
+        await _client.delete(uri, headers: headers).timeout(_timeout);
     return _handleResponse(response);
   }
 
   // -----------------------------------------------------------
-  // _handleResponse â€” Maneja la respuesta del servidor
+  // _handleResponse — Maneja la respuesta del servidor
   // Codigos 200-299 = exito, cualquier otro = error
   // -----------------------------------------------------------
   dynamic _handleResponse(http.Response response) {
     // Exito: el servidor respondio OK (200, 201, 204, etc.)
     if (response.statusCode >= 200 && response.statusCode < 300) {
       // Si la respuesta esta vacia (ej: DELETE exitoso), regreso null
-      if (response.body.isEmpty) return null;
-      // Si hay datos, los convierto de JSON a objeto Dart
-      return jsonDecode(response.body);
+      if (response.body.trim().isEmpty) return null;
+      // Si hay datos, los convierto de JSON a objeto Dart (o texto plano si no es JSON)
+      try {
+        return jsonDecode(response.body);
+      } catch (_) {
+        return response.body;
+      }
     } else {
-      // Error del servidor â€” lo informo con el codigo y mensaje
+      // Error del servidor — lo informo con el codigo y mensaje
       throw Exception(
         'Error HTTP ${response.statusCode}: ${response.body}',
       );
